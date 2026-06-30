@@ -1,0 +1,18 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Video preview — pro_abs (with pauses)</title>
+<style>
+    body{font-family:system-ui;background:#faf7f0;padding:20px;color:#222;}
+    video{max-width:600px;border:1px solid #ddd;border-radius:6px;display:block;margin-bottom:8px;}
+    .note{font-size:14px;color:#666;margin-bottom:18px;}
+    button{font-size:14px;padding:6px 12px;margin-right:6px;}
+</style>
+<h2>pro_abs.mp4 — with pauses</h2>
+<video id="v" src="videos/pro_abs.mp4?t=" controls autoplay></video>
+<div class="note">
+    Now 16.4s total (was 12.4s). Pauses inserted after frames 12, 17, and 20.<br>
+    Sounds: kazoo at 0.5s, wind at 7s, kazoo at 11.2s.<br>
+    Tell me what to adjust: pause durations, pause locations, or sound times.
+</div>
+<button onclick="document.getElementById('v').src='videos/pro_abs.mp4?t='+Date.now()">Replay</button>
+<script>document.getElementById('v').src = 'videos/pro_abs.mp4?t=' + Date.now();</script>

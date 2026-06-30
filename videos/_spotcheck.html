@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>LICK-4 AI-voice spot-check</title>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; margin: 22px; background: #fafafa; }
+  h1 { margin: 0 0 6px; }
+  .sub { color: #666; margin-bottom: 18px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+  .cell { background: white; border-radius: 10px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+  .cell h3 { margin: 0 0 6px; font-size: 17px; }
+  .cell .meta { color: #888; font-size: 13px; margin-bottom: 8px; }
+  video { width: 100%; height: auto; border-radius: 6px; background: #000; }
+  .ok-btn, .bad-btn { padding: 4px 10px; margin: 6px 4px 0 0; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .ok-btn  { background: #d4edda; color: #155724; }
+  .bad-btn { background: #f8d7da; color: #721c24; }
+  .ok-btn.active  { background: #28a745; color: white; }
+  .bad-btn.active { background: #dc3545; color: white; }
+  #summary { position: fixed; bottom: 16px; right: 16px; background: #2a6f97; color: white;
+             padding: 14px 18px; border-radius: 10px; font-size: 14px; min-width: 240px;
+             box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
+  #summary code { background: rgba(255,255,255,0.18); padding: 1px 5px; border-radius: 3px; }
+  .ctrl { margin-bottom: 14px; }
+  .ctrl button { padding: 6px 12px; margin-right: 6px; }
+</style>
+</head>
+<body>
+
+<h1>LICK-4 — AI-voice spot-check</h1>
+<p class="sub">Click ▶ on each. Mark <b>Good</b> or <b>Re-render</b>. The summary in the corner copies the bad list for me.</p>
+
+<div class="ctrl">
+  <button onclick="document.querySelectorAll('video').forEach(v => v.pause())">Pause all</button>
+  <button onclick="reset()">Reset marks</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div id="summary">
+  <div><b>Marked bad (re-render):</b></div>
+  <div id="bad-list">none yet</div>
+  <button style="margin-top: 10px; background: white; color: #2a6f97; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer;" onclick="copyList()">Copy list to clipboard</button>
+</div>
+
+<script>
+const NAMES = [
+  // protagonist, condition, consent, relation -> filename
+  ["Jane",    "Prosocial", "Present", "mom",     "pro_pres_mom"],
+  ["Jane",    "Prosocial", "Present", "teacher", "pro_pres_teacher"],
+  ["Jasmine", "Prosocial", "Absent",  "mom",     "pro_abs_mom"],
+  ["Jasmine", "Prosocial", "Absent",  "teacher", "pro_abs_teacher"],
+  ["Jocelyn", "Saliva",    "Present", "mom",     "sal_pres_mom"],
+  ["Jocelyn", "Saliva",    "Present", "teacher", "sal_pres_teacher"],
+  ["Jenny",   "Saliva",    "Absent",  "mom",     "sal_abs_mom"],
+  ["Jenny",   "Saliva",    "Absent",  "teacher", "sal_abs_teacher"],
+  ["Jada",    "Touch",     "Present", "mom",     "tch_pres_mom"],
+  ["Jada",    "Touch",     "Present", "teacher", "tch_pres_teacher"],
+  ["Julia",   "Touch",     "Absent",  "mom",     "tch_abs_mom"],
+  ["Julia",   "Touch",     "Absent",  "teacher", "tch_abs_teacher"],
+];
+
+const marks = {}; // file -> 'ok' | 'bad' | undefined
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = NAMES.map(([name, cond, cons, rel, file]) => `
+    <div class="cell">
+      <h3>${name} &middot; ${cond} / ${cons} / ${rel}</h3>
+      <div class="meta"><code>${file}.m4v</code></div>
+      <video src="${file}.m4v" controls preload="metadata" data-file="${file}"></video>
+      <button class="ok-btn"  data-file="${file}" data-mark="ok">Good</button>
+      <button class="bad-btn" data-file="${file}" data-mark="bad">Re-render</button>
+    </div>
+  `).join('');
+
+  grid.addEventListener('click', e => {
+    const btn = e.target.closest('button.ok-btn, button.bad-btn');
+    if (!btn) return;
+    const file = btn.dataset.file, mark = btn.dataset.mark;
+    marks[file] = (marks[file] === mark) ? undefined : mark;
+    updateButtons();
+    updateSummary();
+  });
+}
+
+function updateButtons() {
+  document.querySelectorAll('button.ok-btn, button.bad-btn').forEach(b => {
+    b.classList.toggle('active', marks[b.dataset.file] === b.dataset.mark);
+  });
+}
+
+function updateSummary() {
+  const bad = Object.entries(marks).filter(([_, v]) => v === 'bad').map(([f]) => f);
+  document.getElementById('bad-list').textContent =
+    bad.length ? bad.join(', ') : 'none yet';
+}
+
+function reset() {
+  for (const k in marks) delete marks[k];
+  updateButtons();
+  updateSummary();
+}
+
+function copyList() {
+  const bad = Object.entries(marks).filter(([_, v]) => v === 'bad').map(([f]) => f);
+  navigator.clipboard.writeText(bad.join(' ')).then(() => {
+    alert('Copied: ' + (bad.join(' ') || '(none)'));
+  });
+}
+
+render();
+</script>
+</body>
+</html>

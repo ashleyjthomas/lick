@@ -1,0 +1,20 @@
+# Large source files — too big for GitHub, not needed for the live study
+keynote_export/
+working_keynote/
+
+# Backup / archived video voiceovers
+videos/ORIGINAL_VOICE/
+videos/AI_VOICED_ARCHIVE/
+videos/OLD/
+
+# Raw audio sources (.m4a originals); only the transcoded .mp3s need to ship
+audio/*.m4a
+audio/*.mov
+
+# Misc
+.DS_Store
+.claude/
+scratchpad/
+Untitled/
+*.pyc
+__pycache__/

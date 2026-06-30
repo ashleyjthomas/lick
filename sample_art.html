@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>LICK-4 fresh-art sample</title>
+<style>
+    body {
+        background: #faf7f0;
+        font-family: -apple-system, system-ui, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+        color: #222;
+    }
+    h1 { font-size: 22px; margin-top: 0; }
+    h2 { font-size: 18px; margin-top: 28px; color: #444; }
+    .scene-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    }
+    .scene {
+        background: white; border: 1px solid #ddd;
+        border-radius: 10px; padding: 14px;
+    }
+    .scene .label {
+        font-size: 13px; color: #666; margin-bottom: 8px;
+        text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .scene .narration {
+        font-size: 16px; color: #333; margin-top: 8px;
+        font-style: italic;
+    }
+    .scene-svg {
+        background: linear-gradient(to bottom, #cfe9ff 0%, #cfe9ff 60%, #b8e0a8 60%, #b8e0a8 100%);
+        border-radius: 6px;
+    }
+</style>
+</head>
+<body>
+
+<h1>LICK-4 — fresh art sample</h1>
+<p>Four sample scenes showing what fresh art for the 3 × 2 × 2 design could look like. All figures are inline SVG (small, scales cleanly, easy to recolor or relabel later). The same building blocks compose all 12 cells.</p>
+
+<div class="scene-grid">
+
+<!-- Scene 1: Saliva × Present × Mom -->
+<div class="scene">
+    <div class="label">Saliva × Present × Mom — protagonist hands kazoo to mom</div>
+    <svg class="scene-svg" viewBox="0 0 600 360" width="100%">
+        <!-- ground line -->
+        <line x1="0" y1="280" x2="600" y2="280" stroke="#5a8a4a" stroke-width="2"/>
+        <!-- clouds -->
+        <ellipse cx="100" cy="60" rx="40" ry="18" fill="white"/>
+        <ellipse cx="500" cy="80" rx="50" ry="22" fill="white"/>
+        <!-- mom (left) -->
+        <g transform="translate(180, 100)">
+            <!-- head -->
+            <circle cx="0" cy="0" r="36" fill="#fde2c6" stroke="#222" stroke-width="2"/>
+            <!-- hair -->
+            <path d="M -36 -10 Q -40 -45, 0 -38 Q 40 -45, 36 -10 Q 36 -32, 0 -32 Q -36 -32, -36 -10 Z" fill="#7a4a20" stroke="#222" stroke-width="2"/>
+            <!-- eyes -->
+            <circle cx="-10" cy="-2" r="2.5" fill="#222"/>
+            <circle cx="10" cy="-2" r="2.5" fill="#222"/>
+            <!-- smile -->
+            <path d="M -8 12 Q 0 18, 8 12" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round"/>
+            <!-- body -->
+            <path d="M -28 36 L -32 160 L -10 160 L -10 90 L 10 90 L 10 160 L 32 160 L 28 36 Z" fill="#d97a8a" stroke="#222" stroke-width="2"/>
+            <!-- arms reaching slightly right -->
+            <path d="M 26 50 Q 60 65, 70 90" fill="none" stroke="#222" stroke-width="2"/>
+            <path d="M 26 50 Q 60 65, 70 90 L 75 90 Q 65 65, 32 45 Z" fill="#fde2c6" stroke="#222" stroke-width="2"/>
+        </g>
+        <!-- protagonist (right) handing kazoo -->
+        <g transform="translate(380, 150)">
+            <!-- head -->
+            <circle cx="0" cy="0" r="26" fill="#fde2c6" stroke="#222" stroke-width="2"/>
+            <!-- pigtails / ponytail -->
+            <path d="M -26 -8 Q -32 -28, -8 -28 Q 8 -28, 32 -28 Q 32 -8, 26 -8 Q 26 -22, 0 -22 Q -26 -22, -26 -8 Z" fill="#3a2a18" stroke="#222" stroke-width="2"/>
+            <circle cx="-22" cy="6" r="6" fill="#3a2a18" stroke="#222" stroke-width="1.5"/>
+            <circle cx="22" cy="6" r="6" fill="#3a2a18" stroke="#222" stroke-width="1.5"/>
+            <!-- eyes -->
+            <circle cx="-8" cy="-2" r="2.2" fill="#222"/>
+            <circle cx="8" cy="-2" r="2.2" fill="#222"/>
+            <!-- smile -->
+            <path d="M -6 10 Q 0 14, 6 10" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round"/>
+            <!-- body -->
+            <path d="M -22 26 L -26 110 L -8 110 L -8 70 L 8 70 L 8 110 L 26 110 L 22 26 Z" fill="#7ac3e0" stroke="#222" stroke-width="2"/>
+            <!-- left arm extended toward mom holding kazoo -->
+            <path d="M -22 38 Q -55 45, -75 50 L -75 60 Q -55 55, -20 48 Z" fill="#fde2c6" stroke="#222" stroke-width="2"/>
+        </g>
+        <!-- kazoo being handed between them -->
+        <g transform="translate(295, 200) rotate(-10)">
+            <rect x="-22" y="-7" width="44" height="14" rx="3" fill="#e84a4a" stroke="#222" stroke-width="2"/>
+            <circle cx="-22" cy="0" r="5" fill="#c43030" stroke="#222" stroke-width="2"/>
+        </g>
+    </svg>
+    <div class="narration">"Jane is giving her kazoo to her mom."</div>
+</div>
+
+<!-- Scene 2: Saliva × Absent × Teacher -->
+<div class="scene">
+    <div class="label">Saliva × Absent × Teacher — teacher plays kazoo while protagonist is gone</div>
+    <svg class="scene-svg" viewBox="0 0 600 360" width="100%">
+        <line x1="0" y1="280" x2="600" y2="280" stroke="#5a8a4a" stroke-width="2"/>
+        <ellipse cx="120" cy="60" rx="40" ry="18" fill="white"/>
+        <ellipse cx="480" cy="80" rx="50" ry="22" fill="white"/>
+        <!-- footprint trail going off-right indicating "Jocelyn left" -->
+        <path d="M 470 280 Q 510 275, 540 270" fill="none" stroke="#aa9070" stroke-width="2" stroke-dasharray="4 4"/>
+        <text x="540" y="262" font-size="13" fill="#666" font-style="italic">(Jocelyn is gone)</text>
+        <!-- teacher (centred) holding kazoo to mouth -->
+        <g transform="translate(280, 110)">
+            <!-- glasses-style head -->
+            <circle cx="0" cy="0" r="36" fill="#f5d3b3" stroke="#222" stroke-width="2"/>
+            <!-- hair bun -->
+            <ellipse cx="0" cy="-40" rx="18" ry="14" fill="#4a3018" stroke="#222" stroke-width="2"/>
+            <path d="M -36 -8 Q -34 -32, 0 -32 Q 34 -32, 36 -8 Q 36 -28, 0 -28 Q -36 -28, -36 -8 Z" fill="#4a3018" stroke="#222" stroke-width="2"/>
+            <!-- glasses -->
+            <circle cx="-10" cy="-2" r="7" fill="none" stroke="#222" stroke-width="2"/>
+            <circle cx="10" cy="-2" r="7" fill="none" stroke="#222" stroke-width="2"/>
+            <line x1="-3" y1="-2" x2="3" y2="-2" stroke="#222" stroke-width="2"/>
+            <!-- closed smile around kazoo -->
+            <line x1="-6" y1="14" x2="6" y2="14" stroke="#222" stroke-width="2"/>
+            <!-- body -->
+            <path d="M -32 36 L -36 180 L -12 180 L -12 100 L 12 100 L 12 180 L 36 180 L 32 36 Z" fill="#8a6db8" stroke="#222" stroke-width="2"/>
+            <!-- arm holding kazoo to mouth -->
+            <path d="M -28 56 Q -45 28, -20 16 Z" fill="#f5d3b3" stroke="#222" stroke-width="2"/>
+        </g>
+        <!-- kazoo at teacher's mouth -->
+        <g transform="translate(252, 122) rotate(-15)">
+            <rect x="-20" y="-7" width="40" height="14" rx="3" fill="#e84a4a" stroke="#222" stroke-width="2"/>
+            <circle cx="20" cy="0" r="5" fill="#c43030" stroke="#222" stroke-width="2"/>
+            <!-- music note -->
+            <text x="-46" y="-14" font-size="20" fill="#222">♪</text>
+        </g>
+    </svg>
+    <div class="narration">"Jocelyn's teacher is playing Jocelyn's kazoo."</div>
+</div>
+
+<!-- Scene 3: Touch × Absent × Mom -->
+<div class="scene">
+    <div class="label">Touch × Absent × Mom — mom uses protagonist's drumstick</div>
+    <svg class="scene-svg" viewBox="0 0 600 360" width="100%">
+        <line x1="0" y1="280" x2="600" y2="280" stroke="#5a8a4a" stroke-width="2"/>
+        <ellipse cx="100" cy="50" rx="40" ry="18" fill="white"/>
+        <ellipse cx="500" cy="70" rx="50" ry="22" fill="white"/>
+        <path d="M 470 280 Q 510 275, 540 270" fill="none" stroke="#aa9070" stroke-width="2" stroke-dasharray="4 4"/>
+        <text x="540" y="262" font-size="13" fill="#666" font-style="italic">(Jada is gone)</text>
+        <!-- mom -->
+        <g transform="translate(260, 110)">
+            <circle cx="0" cy="0" r="36" fill="#fde2c6" stroke="#222" stroke-width="2"/>
+            <path d="M -36 -10 Q -40 -45, 0 -38 Q 40 -45, 36 -10 Q 36 -32, 0 -32 Q -36 -32, -36 -10 Z" fill="#7a4a20" stroke="#222" stroke-width="2"/>
+            <circle cx="-10" cy="-2" r="2.5" fill="#222"/>
+            <circle cx="10" cy="-2" r="2.5" fill="#222"/>
+            <path d="M -8 12 Q 0 18, 8 12" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round"/>
+            <path d="M -28 36 L -32 180 L -10 180 L -10 100 L 10 100 L 10 180 L 32 180 L 28 36 Z" fill="#d97a8a" stroke="#222" stroke-width="2"/>
+            <!-- arm down toward drum, holding stick -->
+            <path d="M 26 52 Q 60 75, 80 110 L 84 105 Q 65 70, 32 46 Z" fill="#fde2c6" stroke="#222" stroke-width="2"/>
+        </g>
+        <!-- drum + drumstick -->
+        <g transform="translate(390, 250)">
+            <!-- drum body -->
+            <ellipse cx="0" cy="0" rx="48" ry="14" fill="#e8c87a" stroke="#222" stroke-width="2"/>
+            <rect x="-48" y="0" width="96" height="34" fill="#c0902a" stroke="#222" stroke-width="2"/>
+            <ellipse cx="0" cy="34" rx="48" ry="14" fill="#a06820" stroke="#222" stroke-width="2"/>
+            <!-- drum bands -->
+            <line x1="-46" y1="12" x2="-46" y2="22" stroke="#222" stroke-width="1.5"/>
+            <line x1="46" y1="12" x2="46" y2="22" stroke="#222" stroke-width="1.5"/>
+            <line x1="0" y1="6" x2="0" y2="32" stroke="#7a4a10" stroke-width="2"/>
+        </g>
+        <!-- drumstick in mom's hand -->
+        <g transform="translate(380, 200) rotate(-30)">
+            <rect x="-3" y="0" width="6" height="56" fill="#c8a060" stroke="#222" stroke-width="1.5"/>
+            <circle cx="0" cy="-4" r="6" fill="#a07830" stroke="#222" stroke-width="1.5"/>
+        </g>
+    </svg>
+    <div class="narration">"Now Jada's mom is using Jada's drumstick."</div>
+</div>
+
+<!-- Scene 4: Prosocial × Present × Teacher -->
+<div class="scene">
+    <div class="label">Prosocial × Present × Teacher — teacher rights the fallen kazoo while protagonist watches</div>
+    <svg class="scene-svg" viewBox="0 0 600 360" width="100%">
+        <line x1="0" y1="280" x2="600" y2="280" stroke="#5a8a4a" stroke-width="2"/>
+        <ellipse cx="110" cy="55" rx="40" ry="18" fill="white"/>
+        <ellipse cx="490" cy="80" rx="50" ry="22" fill="white"/>
+        <!-- wind swoosh -->
+        <path d="M 60 130 Q 130 110, 220 130" fill="none" stroke="#7aa8d0" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M 80 160 Q 160 145, 240 160" fill="none" stroke="#7aa8d0" stroke-width="2" stroke-linecap="round"/>
+        <!-- teacher (left) bending down to pick up kazoo -->
+        <g transform="translate(220, 130)">
+            <circle cx="0" cy="0" r="36" fill="#f5d3b3" stroke="#222" stroke-width="2"/>
+            <ellipse cx="0" cy="-40" rx="18" ry="14" fill="#4a3018" stroke="#222" stroke-width="2"/>
+            <path d="M -36 -8 Q -34 -32, 0 -32 Q 34 -32, 36 -8 Q 36 -28, 0 -28 Q -36 -28, -36 -8 Z" fill="#4a3018" stroke="#222" stroke-width="2"/>
+            <circle cx="-10" cy="-2" r="7" fill="none" stroke="#222" stroke-width="2"/>
+            <circle cx="10" cy="-2" r="7" fill="none" stroke="#222" stroke-width="2"/>
+            <line x1="-3" y1="-2" x2="3" y2="-2" stroke="#222" stroke-width="2"/>
+            <path d="M -8 12 Q 0 16, 8 12" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round"/>
+            <path d="M -32 36 L -36 170 L -12 170 L -12 100 L 12 100 L 12 170 L 36 170 L 32 36 Z" fill="#8a6db8" stroke="#222" stroke-width="2"/>
+            <!-- arm reaching down to kazoo on ground -->
+            <path d="M 30 80 Q 60 130, 90 150 L 95 144 Q 65 124, 36 75 Z" fill="#f5d3b3" stroke="#222" stroke-width="2"/>
+        </g>
+        <!-- kazoo on ground -->
+        <g transform="translate(320, 260) rotate(20)">
+            <rect x="-22" y="-7" width="44" height="14" rx="3" fill="#e84a4a" stroke="#222" stroke-width="2"/>
+            <circle cx="-22" cy="0" r="5" fill="#c43030" stroke="#222" stroke-width="2"/>
+        </g>
+        <!-- protagonist (right) watching -->
+        <g transform="translate(450, 155)">
+            <circle cx="0" cy="0" r="26" fill="#fde2c6" stroke="#222" stroke-width="2"/>
+            <path d="M -26 -8 Q -32 -28, -8 -28 Q 8 -28, 32 -28 Q 32 -8, 26 -8 Q 26 -22, 0 -22 Q -26 -22, -26 -8 Z" fill="#3a2a18" stroke="#222" stroke-width="2"/>
+            <circle cx="-22" cy="6" r="6" fill="#3a2a18" stroke="#222" stroke-width="1.5"/>
+            <circle cx="22" cy="6" r="6" fill="#3a2a18" stroke="#222" stroke-width="1.5"/>
+            <circle cx="-8" cy="-2" r="2.2" fill="#222"/>
+            <circle cx="8" cy="-2" r="2.2" fill="#222"/>
+            <path d="M -6 10 Q 0 13, 6 10" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round"/>
+            <path d="M -22 26 L -26 125 L -8 125 L -8 75 L 8 75 L 8 125 L 26 125 L 22 26 Z" fill="#7ac3e0" stroke="#222" stroke-width="2"/>
+        </g>
+    </svg>
+    <div class="narration">"Janice's teacher is putting it back."</div>
+</div>
+
+</div>
+
+<h2>Notes</h2>
+<ul>
+    <li><b>One protagonist sprite</b> works for all 12 scenes — only her name in the narration changes per trial. (Optional: vary hair color/clothing color per protagonist if you'd rather have visually distinct girls.)</li>
+    <li><b>Mom vs Teacher</b> are visually distinct: different hair (mom = down hair, teacher = bun + glasses) and clothing color (mom = pink, teacher = purple).</li>
+    <li><b>Kazoo vs Drumstick + Drum</b> distinguishes the action type. Wind-swoosh lines + tipped kazoo on the ground signals the Prosocial setup.</li>
+    <li><b>Protagonist absence</b> shown as a dashed-footprint trail going off-screen with a tiny caption "(name is gone)".</li>
+    <li><b>Style</b>: deliberately spare, friendly, no fine detail — keeps cognitive load low for 6–8 year olds and avoids reading the children as a specific race/ethnicity.</li>
+</ul>
+
+</body>
+</html>
