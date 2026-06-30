@@ -183,43 +183,48 @@ function trial_narration_audio_path(t) {
     const FOX_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 240" width="100%" height="100%"
      style="overflow: visible;">
-  <!-- ears (outer) -->
-  <path d="M 38 70 L 28 8 L 84 42 Z"   fill="#e67e22" stroke="#2c1810" stroke-width="3.5" stroke-linejoin="round"/>
-  <path d="M 182 70 L 192 8 L 136 42 Z" fill="#e67e22" stroke="#2c1810" stroke-width="3.5" stroke-linejoin="round"/>
-  <!-- ears (inner pink) -->
-  <path d="M 50 60 L 42 24 L 72 44 Z"  fill="#f9c6c6"/>
-  <path d="M 170 60 L 178 24 L 148 44 Z" fill="#f9c6c6"/>
-  <!-- head -->
-  <ellipse cx="110" cy="130" rx="82" ry="86" fill="#e67e22" stroke="#2c1810" stroke-width="3.5"/>
-  <!-- forehead lighter patch -->
-  <ellipse cx="110" cy="95" rx="55" ry="22" fill="#fdf2e9" opacity="0.55"/>
-  <!-- white muzzle -->
-  <ellipse cx="110" cy="168" rx="46" ry="38" fill="#fdf2e9" stroke="#2c1810" stroke-width="3"/>
-  <!-- eyes (white + pupil + shine) -->
-  <ellipse cx="78"  cy="118" rx="11" ry="13" fill="#fdf2e9" stroke="#2c1810" stroke-width="2.2"/>
-  <ellipse cx="142" cy="118" rx="11" ry="13" fill="#fdf2e9" stroke="#2c1810" stroke-width="2.2"/>
-  <circle  cx="80"  cy="120" r="5.5" fill="#2c1810"/>
-  <circle  cx="144" cy="120" r="5.5" fill="#2c1810"/>
-  <circle  cx="82"  cy="117" r="1.8" fill="#fff"/>
-  <circle  cx="146" cy="117" r="1.8" fill="#fff"/>
-  <!-- cheek blush -->
-  <circle cx="55"  cy="160" r="9" fill="#ff8a8a" opacity="0.4"/>
-  <circle cx="165" cy="160" r="9" fill="#ff8a8a" opacity="0.4"/>
-  <!-- nose -->
-  <path d="M 100 148 Q 110 158 120 148 Q 115 156 110 158 Q 105 156 100 148 Z"
-        fill="#2c1810"/>
-  <!-- nose-to-mouth bridge -->
-  <line x1="110" y1="158" x2="110" y2="178" stroke="#2c1810" stroke-width="2.2"/>
-  <!-- ANIMATED mouth (this ellipse scales vertically when .speaking) -->
+  <!-- Small short ears on top -->
+  <path d="M 62 60 L 78 14 L 102 54 Z"
+        fill="#ff8a3a" stroke="#cf5a1a" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M 158 60 L 142 14 L 118 54 Z"
+        fill="#ff8a3a" stroke="#cf5a1a" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Inner ear (peach) -->
+  <path d="M 78 50 L 82 28 L 95 46 Z"  fill="#fbd5b5"/>
+  <path d="M 142 50 L 138 28 L 125 46 Z" fill="#fbd5b5"/>
+  <!-- Head: kawaii pear shape with subtle cheek puffs at the jawline -->
+  <path d="M 78 62
+           Q 38 70 28 105
+           Q 14 150 30 185
+           Q 50 210 90 215
+           Q 100 220 110 220
+           Q 120 220 130 215
+           Q 170 210 190 185
+           Q 206 150 192 105
+           Q 182 70 142 62
+           Q 110 55 78 62 Z"
+        fill="#ff8a3a" stroke="#cf5a1a" stroke-width="3" stroke-linejoin="round"/>
+  <!-- White face mask: wide, follows cheek contour, soft chin point -->
+  <path d="M 52 145
+           Q 38 185 78 210
+           Q 95 220 110 220
+           Q 125 220 142 210
+           Q 182 185 168 145
+           Q 140 158 110 158
+           Q 80 158 52 145 Z"
+        fill="#fdf2e9" stroke="#cf5a1a" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Big round anime eyes (positioned above the white mask, in the orange) -->
+  <circle cx="82"  cy="120" r="11" fill="#2c1810"/>
+  <circle cx="138" cy="120" r="11" fill="#2c1810"/>
+  <!-- Eye shine -->
+  <circle cx="86"  cy="115" r="3.5" fill="#fff"/>
+  <circle cx="142" cy="115" r="3.5" fill="#fff"/>
+  <circle cx="78"  cy="125" r="1.8" fill="#fff"/>
+  <circle cx="134" cy="125" r="1.8" fill="#fff"/>
+  <!-- Tiny triangle nose -->
+  <path d="M 102 168 L 118 168 L 110 178 Z" fill="#2c1810" stroke-linejoin="round"/>
+  <!-- Cute mouth (animated). Tiny ellipse, opens vertically when speaking. -->
   <g class="fox-mouth-wrap">
-    <ellipse class="fox-mouth" cx="110" cy="183" rx="14" ry="3" fill="#2c1810"/>
-  </g>
-  <!-- whiskers -->
-  <g stroke="#2c1810" stroke-width="1.6" stroke-linecap="round" fill="none">
-    <path d="M 70 170 Q 50 168 32 162"/>
-    <path d="M 70 178 Q 50 180 30 180"/>
-    <path d="M 150 170 Q 170 168 188 162"/>
-    <path d="M 150 178 Q 170 180 190 180"/>
+    <ellipse class="fox-mouth" cx="110" cy="190" rx="7" ry="2" fill="#2c1810"/>
   </g>
 </svg>`;
 
