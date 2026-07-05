@@ -152,8 +152,8 @@ function trial_narration_audio_path(t) {
 // idle (still) otherwise. Inline SVG so CSS can target the mouth element.
 (function setupNarrator() {
     if (document.getElementById('lick4-narrator-container')) return;
-    // Twemoji fox 🦊 (CC-BY 4.0, Twitter). Mouth split out as its own path so
-    // the .fox-mouth scaleY talking animation still works.
+    // Twemoji fox 🦊 (CC-BY 4.0, Twitter), with a small animated mouth ellipse
+    // at the bottom so the .fox-mouth talking animation still plays.
     const FOX_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="100%" height="100%" style="overflow: visible;">
   <path fill="#F4900C" d="M13.431 9.802c.658 2.638-8.673 10.489-11.244 4.098C.696 10.197-.606 2.434.874 2.065c1.48-.368 11.9 5.098 12.557 7.737z"/>
@@ -175,6 +175,7 @@ function trial_narration_audio_path(t) {
                         right 0.9s ease-in-out, bottom 0.9s ease-in-out,
                         top   0.9s ease-in-out, left   0.9s ease-in-out,
                         margin-left 0.9s ease-in-out, margin-top 0.9s ease-in-out; }
+        #lick4-narrator-container.hidden { display: none !important; }
         #lick4-narrator-container.intro-center {
             right: auto; bottom: auto; left: 50%; top: 50%;
             width: 360px; height: 392px;
@@ -265,6 +266,8 @@ function trial_narration_audio_path(t) {
         if (!c) {
             c = document.createElement('div');
             c.id = 'lick4-narrator-container';
+            // Start hidden — revealed on the directions/audio-check screen.
+            if (!window._lick4FoxVisible) c.className = 'hidden';
             c.innerHTML = `<div class="fox-inner">${FOX_SVG}</div>`;
         }
         if (c.parentNode !== document.documentElement) document.documentElement.appendChild(c);
@@ -638,8 +641,10 @@ const fox_intro = {
     choices: next_button(),
     data: { name: "fox_intro" },
     on_load: function() {
+        // Reveal the fox (in local test we have no directions screen).
+        window._lick4FoxVisible = true;
         const c = document.getElementById('lick4-narrator-container');
-        if (c) c.classList.add('intro-center');
+        if (c) { c.classList.remove('hidden'); c.classList.add('intro-center'); }
         const audio = document.querySelector('audio.fox-intro-audio');
         const btns = () => document.querySelectorAll('button.jspsych-btn');
         btns().forEach(b => { b.disabled = true; b.style.opacity = '0.4'; });

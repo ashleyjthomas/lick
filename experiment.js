@@ -35,6 +35,12 @@
 const jsPsych = initJsPsych();
 const timeline = [];
 
+// Base URL for audio / video / image assets. Assets are hosted on GitHub Pages
+// so that CHS (which hosts only this .js file) can fetch them by absolute URL.
+// Local paths like "audio/foo.mp3" are prefixed at load time; SPEECH_REGIONS
+// keys stay relative because that lookup uses endsWith().
+const BASE_URL = "https://ashleyjthomas.github.io/lick/";
+
 // === STUDY CONSTANTS ===========================================
 
 const CONDITIONS = ["Saliva", "Touch", "Prosocial"];
@@ -111,24 +117,24 @@ function trial_audio_path(t) {
     const c  = t.condition.toLowerCase();
     const cs = t.consent.toLowerCase();
     const r  = t.relation.toLowerCase();
-    return `audio/trial_${c}_${cs}_${r}.mp3`;
+    return `${BASE_URL}audio/trial_${c}_${cs}_${r}.mp3`;
 }
 
 const AUDIO = {
     // Only truly generic audio lives here; question audios are
     // per-name and per-relation, resolved by helper functions below.
-    q_certainty_ok:    "audio/q_certainty_ok.mp3",     // played after okay_judgment YES
-    q_certainty_notok: "audio/q_certainty_notok.mp3",  // played after okay_judgment NO
+    q_certainty_ok:    BASE_URL + "audio/q_certainty_ok.mp3",     // played after okay_judgment YES
+    q_certainty_notok: BASE_URL + "audio/q_certainty_notok.mp3",  // played after okay_judgment NO
     // Variants worded as a third-person question, used after the
     // protagonist_inference Yes/No ("Would she think it was really ok…").
-    q_protag_certainty_ok:    "audio/q_protag_certainty_ok.mp3",
-    q_protag_certainty_notok: "audio/q_protag_certainty_notok.mp3",
+    q_protag_certainty_ok:    BASE_URL + "audio/q_protag_certainty_ok.mp3",
+    q_protag_certainty_notok: BASE_URL + "audio/q_protag_certainty_notok.mp3",
     // Fox's "thanks, we got a piece of pie!" celebration after each trial.
-    pie_slice_first:    "audio/fox_pie_slice_first.mp3",    // after trial 1
-    pie_slice_more:     "audio/fox_pie_slice_more.mp3",     // after trials 2–6
-    pie_slice_more_yum: "audio/fox_pie_slice_more_yum.mp3", // same + "yum!"
-    button_training:    "audio/fox_button_training.mp3",    // explains the two buttons
-    thanks:            "audio/thanks.mp3"
+    pie_slice_first:    BASE_URL + "audio/fox_pie_slice_first.mp3",    // after trial 1
+    pie_slice_more:     BASE_URL + "audio/fox_pie_slice_more.mp3",     // after trials 2–6
+    pie_slice_more_yum: BASE_URL + "audio/fox_pie_slice_more_yum.mp3", // same + "yum!"
+    button_training:    BASE_URL + "audio/fox_button_training.mp3",    // explains the two buttons
+    thanks:            BASE_URL + "audio/thanks.mp3"
 };
 
 // Per-trial question audio paths. Names are lowercased; relations
@@ -136,7 +142,7 @@ const AUDIO = {
 function _q_audio(kind, t) {
     const n = t.protagonist.toLowerCase();
     const r = t.relation.toLowerCase();
-    return `audio/q_${kind}_${n}_${r}.mp3`;
+    return `${BASE_URL}audio/q_${kind}_${n}_${r}.mp3`;
 }
 function memory_audio(t)            { return _q_audio("memory", t); }
 function okay_audio(t)              { return _q_audio("okay", t); }
@@ -155,7 +161,7 @@ function trial_video_path(t) {
     const c = CONDITION_SHORT[t.condition];
     const s = CONSENT_SHORT[t.consent];
     const r = t.relation.toLowerCase();
-    return `videos/${c}_${s}_${r}.m4v`;
+    return `${BASE_URL}videos/${c}_${s}_${r}.m4v`;
 }
 
 // Per-trial narration audio: 6 cells × 2 relations = 12 files.
@@ -164,7 +170,7 @@ function trial_narration_audio_path(t) {
     const c = CONDITION_SHORT[t.condition];
     const s = CONSENT_SHORT[t.consent];
     const r = t.relation.toLowerCase();
-    return `audio/narration_${c}_${s}_${r}.mp3`;
+    return `${BASE_URL}audio/narration_${c}_${s}_${r}.mp3`;
 }
 
 // === HELPER FUNCTIONS ==========================================
@@ -180,52 +186,20 @@ function trial_narration_audio_path(t) {
     if (typeof document === 'undefined') return;
     if (document.getElementById('lick4-narrator-container')) return;
 
+    // Twemoji fox 🦊 (CC-BY 4.0, Twitter), with a small animated mouth ellipse
+    // at the bottom so the .fox-mouth talking animation still plays.
     const FOX_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 240" width="100%" height="100%"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="100%" height="100%"
      style="overflow: visible;">
-  <!-- Small short ears on top -->
-  <path d="M 62 60 L 78 14 L 102 54 Z"
-        fill="#ff8a3a" stroke="#cf5a1a" stroke-width="3" stroke-linejoin="round"/>
-  <path d="M 158 60 L 142 14 L 118 54 Z"
-        fill="#ff8a3a" stroke="#cf5a1a" stroke-width="3" stroke-linejoin="round"/>
-  <!-- Inner ear (peach) -->
-  <path d="M 78 50 L 82 28 L 95 46 Z"  fill="#fbd5b5"/>
-  <path d="M 142 50 L 138 28 L 125 46 Z" fill="#fbd5b5"/>
-  <!-- Head: kawaii pear shape with subtle cheek puffs at the jawline -->
-  <path d="M 78 62
-           Q 38 70 28 105
-           Q 14 150 30 185
-           Q 50 210 90 215
-           Q 100 220 110 220
-           Q 120 220 130 215
-           Q 170 210 190 185
-           Q 206 150 192 105
-           Q 182 70 142 62
-           Q 110 55 78 62 Z"
-        fill="#ff8a3a" stroke="#cf5a1a" stroke-width="3" stroke-linejoin="round"/>
-  <!-- White face mask: wide, follows cheek contour, soft chin point -->
-  <path d="M 52 145
-           Q 38 185 78 210
-           Q 95 220 110 220
-           Q 125 220 142 210
-           Q 182 185 168 145
-           Q 140 158 110 158
-           Q 80 158 52 145 Z"
-        fill="#fdf2e9" stroke="#cf5a1a" stroke-width="2.5" stroke-linejoin="round"/>
-  <!-- Big round anime eyes (positioned above the white mask, in the orange) -->
-  <circle cx="82"  cy="120" r="11" fill="#2c1810"/>
-  <circle cx="138" cy="120" r="11" fill="#2c1810"/>
-  <!-- Eye shine -->
-  <circle cx="86"  cy="115" r="3.5" fill="#fff"/>
-  <circle cx="142" cy="115" r="3.5" fill="#fff"/>
-  <circle cx="78"  cy="125" r="1.8" fill="#fff"/>
-  <circle cx="134" cy="125" r="1.8" fill="#fff"/>
-  <!-- Tiny triangle nose -->
-  <path d="M 102 168 L 118 168 L 110 178 Z" fill="#2c1810" stroke-linejoin="round"/>
-  <!-- Cute mouth (animated). Tiny ellipse, opens vertically when speaking. -->
-  <g class="fox-mouth-wrap">
-    <ellipse class="fox-mouth" cx="110" cy="190" rx="7" ry="2" fill="#2c1810"/>
-  </g>
+  <path fill="#F4900C" d="M13.431 9.802c.658 2.638-8.673 10.489-11.244 4.098C.696 10.197-.606 2.434.874 2.065c1.48-.368 11.9 5.098 12.557 7.737z"/>
+  <path fill="#A0041E" d="M11.437 10.355c.96 1.538-1.831 4.561-3.368 5.522-1.538.961-2.899-.552-4.414-4.414-.662-1.689-1.666-6.27-1.103-6.622.562-.351 7.924 3.976 8.885 5.514z"/>
+  <path fill="#F4900C" d="M22.557 9.802C21.9 12.441 31.23 20.291 33.802 13.9c1.49-3.703 2.792-11.466 1.312-11.835-1.48-.368-11.899 5.098-12.557 7.737z"/>
+  <path fill="#A0041E" d="M24.552 10.355c-.96 1.538 1.831 4.561 3.368 5.522 1.537.961 2.898-.552 4.413-4.414.662-1.688 1.666-6.269 1.104-6.621-.563-.352-7.924 3.975-8.885 5.513z"/>
+  <path fill="#F18F26" d="M32.347 26.912c0-.454-.188-1.091-.407-1.687.585.028 1.519.191 2.77.817-.008-.536-.118-.984-.273-1.393.041.02.075.034.116.055-1.103-3.31-3.309-5.517-3.309-5.517h2.206c-2.331-4.663-4.965-8.015-8.075-9.559-1.39-.873-3.688-1.338-7.373-1.339h-.003c-3.695 0-5.996.468-7.385 1.346-3.104 1.547-5.734 4.896-8.061 9.552H4.76s-2.207 2.206-3.311 5.517c.03-.015.055-.025.084-.04-.201.392-.307.847-.282 1.377 1.263-.632 2.217-.792 2.813-.818-.189.513-.343 1.044-.386 1.475-.123.371-.191.812-.135 1.343C6.75 26.584 8.25 26.792 10 27.667 11.213 31.29 14.206 34 18.001 34c3.793 0 6.746-2.794 7.958-6.416 1.458-1.25 3.708-.875 6.416.416.066-.414.036-.773-.036-1.093l.008.005z"/>
+  <path fill="#FFD983" d="M31.243 23.601c.006 0 1.108.003 3.309 1.103-1.249-2.839-7.525-4.07-9.931-3.291-1.171 1.954-1.281 5.003-3.383 6.622-1.741 1.431-4.713 1.458-6.479 0-2.345-1.924-2.559-5.813-3.382-6.622-2.407-.781-8.681.454-9.931 3.291 2.201-1.101 3.304-1.103 3.309-1.103 0 .001-1.103 2.208-1.103 3.311l.001-.001v.001c2.398-1.573 5.116-2.271 7.429-.452 1.666 7.921 12.293 7.545 13.833 0 2.314-1.818 5.03-1.122 7.429.452v-.001l.001.001c.002-1.103-1.101-3.311-1.102-3.311z"/>
+  <path fill="#272B2B" d="M11 17s0-1.5 1.5-1.5S14 17 14 17v1.5s0 1.5-1.5 1.5-1.5-1.5-1.5-1.5V17zm11 0s0-1.5 1.5-1.5S25 17 25 17v1.5s0 1.5-1.5 1.5-1.5-1.5-1.5-1.5V17z"/>
+  <path fill="#272B2B" d="M14.939 27.808c-1.021.208 2.041 3.968 3.062 3.968 1.02 0 4.082-3.76 3.062-3.968-1.021-.208-5.103-.208-6.124 0z"/>
+  <ellipse class="fox-mouth" cx="18" cy="33" rx="0.7" ry="0.35" fill="#272B2B"/>
 </svg>`;
 
     const css = `
@@ -248,6 +222,10 @@ function trial_narration_audio_path(t) {
                         top   0.9s ease-in-out, left   0.9s ease-in-out,
                         margin-left 0.9s ease-in-out, margin-top 0.9s ease-in-out;
         }
+        /* Hide the fox entirely — used during CHS video-config + consent frames
+           before the study actually begins. Removed on the directions/audio-check
+           screen so the fox is visible from the sound-check onward. */
+        #lick4-narrator-container.hidden { display: none !important; }
         #lick4-narrator-container.intro-center {
             right:  auto;
             bottom: auto;
@@ -403,6 +381,12 @@ function trial_narration_audio_path(t) {
         if (!c) {
             c = document.createElement('div');
             c.id = 'lick4-narrator-container';
+            // Start hidden so the fox doesn't show on CHS video-config /
+            // consent frames. The directions_and_audio_check trial flips the
+            // global flag and removes this class when the study proper begins.
+            // Re-mounts (if anything ever removes the container) respect the
+            // current visibility state via the flag.
+            if (!window._lick4FoxVisible) c.className = 'hidden';
             c.innerHTML = `<div class="fox-inner">${FOX_SVG}</div>`;
         }
         if (c.parentNode !== document.documentElement) {
@@ -448,20 +432,20 @@ function trial_narration_audio_path(t) {
         // For files NOT in this map (short audio clips, etc.) we fall
         // back to "is playing = speaking".
         const SPEECH_REGIONS = {
-            "videos/pro_pres_mom.m4v": [[0.41,1.73],[2.39,5.71],[6.51,8.29],[14.85,17.89],[23.95,26.59],[32.13,34.99]],
-            "videos/pro_pres_teacher.m4v": [[0.0,1.69],[2.27,5.59],[6.63,8.29],[14.37,17.79],[24.63,26.87],[31.73,34.61]],
-            "videos/pro_abs_mom.m4v": [[0.0,1.95],[2.31,5.61],[6.31,8.15],[13.69,15.23],[17.73,20.29],[25.75,28.85],[32.85,37.03]],
-            "videos/pro_abs_teacher.m4v": [[0.0,1.93],[2.43,5.77],[6.47,8.51],[14.07,15.67],[17.97,21.35],[27.51,29.77],[33.59,36.81]],
-            "videos/sal_pres_mom.m4v": [[0.0,1.85],[2.29,5.91],[6.59,8.71],[15.69,18.41],[18.91,22.15],[29.23,34.49]],
-            "videos/sal_pres_teacher.m4v": [[0.0,1.75],[2.37,6.15],[6.87,9.05],[16.17,18.87],[19.49,21.97],[30.33,35.37]],
-            "videos/sal_abs_mom.m4v": [[0.65,1.85],[2.51,5.59],[6.29,7.99],[13.15,14.63],[15.33,19.01],[27.63,30.75]],
-            "videos/sal_abs_teacher.m4v": [[0.0,1.45],[2.05,5.11],[5.97,7.75],[13.07,14.47],[15.03,16.45],[16.71,19.15],[26.73,29.95]],
-            "videos/tch_pres_mom.m4v": [[0.89,2.29],[2.61,6.57],[7.61,9.23],[17.41,20.21],[20.71,23.01],[29.85,32.39]],
-            "videos/tch_pres_teacher.m4v": [[0.63,1.77],[2.11,4.93],[5.73,7.11],[15.25,17.85],[18.61,21.19],[25.19,29.53]],
-            "videos/tch_abs_mom.m4v": [[0.59,1.89],[2.21,5.29],[6.01,7.55],[13.79,15.27],[15.59,16.99],[17.11,19.33],[26.01,29.41]],
-            "videos/tch_abs_teacher.m4v": [[0.0,1.45],[1.91,5.07],[5.77,7.29],[13.87,19.27],[26.27,29.51],[36.73,38.43]],
-            "videos/girls_mom_intro.m4v": [[0.53,5.47],[6.47,9.85]],
-            "videos/girls_teacher_intro.m4v": [[0.0,7.81]]
+            [BASE_URL + "videos/pro_pres_mom.m4v"]: [[0.41,1.73],[2.39,5.71],[6.51,8.29],[14.85,17.89],[23.95,26.59],[32.13,34.99]],
+            [BASE_URL + "videos/pro_pres_teacher.m4v"]: [[0.0,1.69],[2.27,5.59],[6.63,8.29],[14.37,17.79],[24.63,26.87],[31.73,34.61]],
+            [BASE_URL + "videos/pro_abs_mom.m4v"]: [[0.0,1.95],[2.31,5.61],[6.31,8.15],[13.69,15.23],[17.73,20.29],[25.75,28.85],[32.85,37.03]],
+            [BASE_URL + "videos/pro_abs_teacher.m4v"]: [[0.0,1.93],[2.43,5.77],[6.47,8.51],[14.07,15.67],[17.97,21.35],[27.51,29.77],[33.59,36.81]],
+            [BASE_URL + "videos/sal_pres_mom.m4v"]: [[0.0,1.85],[2.29,5.91],[6.59,8.71],[15.69,18.41],[18.91,22.15],[29.23,34.49]],
+            [BASE_URL + "videos/sal_pres_teacher.m4v"]: [[0.0,1.75],[2.37,6.15],[6.87,9.05],[16.17,18.87],[19.49,21.97],[30.33,35.37]],
+            [BASE_URL + "videos/sal_abs_mom.m4v"]: [[0.65,1.85],[2.51,5.59],[6.29,7.99],[13.15,14.63],[15.33,19.01],[27.63,30.75]],
+            [BASE_URL + "videos/sal_abs_teacher.m4v"]: [[0.0,1.45],[2.05,5.11],[5.97,7.75],[13.07,14.47],[15.03,16.45],[16.71,19.15],[26.73,29.95]],
+            [BASE_URL + "videos/tch_pres_mom.m4v"]: [[0.89,2.29],[2.61,6.57],[7.61,9.23],[17.41,20.21],[20.71,23.01],[29.85,32.39]],
+            [BASE_URL + "videos/tch_pres_teacher.m4v"]: [[0.63,1.77],[2.11,4.93],[5.73,7.11],[15.25,17.85],[18.61,21.19],[25.19,29.53]],
+            [BASE_URL + "videos/tch_abs_mom.m4v"]: [[0.59,1.89],[2.21,5.29],[6.01,7.55],[13.79,15.27],[15.59,16.99],[17.11,19.33],[26.01,29.41]],
+            [BASE_URL + "videos/tch_abs_teacher.m4v"]: [[0.0,1.45],[1.91,5.07],[5.77,7.29],[13.87,19.27],[26.27,29.51],[36.73,38.43]],
+            [BASE_URL + "videos/girls_mom_intro.m4v"]: [[0.53,5.47],[6.47,9.85]],
+            [BASE_URL + "videos/girls_teacher_intro.m4v"]: [[0.0,7.81]]
         };
 
         function regionFor(m) {
@@ -551,7 +535,7 @@ function thumb_choice_box(kind /* "up" | "down" */) {
     const isUp  = kind === "up";
     const bg    = isUp ? "linear-gradient(135deg,#1e8449,#27AE60)"
                        : "linear-gradient(135deg,#922b21,#C0392B)";
-    const src   = isUp ? "images/thumbsup.png" : "images/thumbsdown.png";
+    const src   = isUp ? BASE_URL + "images/thumbsup.png" : BASE_URL + "images/thumbsdown.png";
     const label = isUp ? "Okay" : "Not Okay";
     return `<div style="background:${bg};color:white;padding:18px 28px;min-width:170px;
                         border-radius:22px;font-size:22px;font-weight:700;line-height:1.2;
@@ -623,7 +607,7 @@ function okay_certainty_trial(extra_data, prior_name = "okay_judgment",
         },
         choices: function() {
             const isYes = window._last_okay_isYes;
-            const thumbSrc = isYes ? "images/thumbsup.png" : "images/thumbsdown.png";
+            const thumbSrc = isYes ? BASE_URL + "images/thumbsup.png" : BASE_URL + "images/thumbsdown.png";
             const strongBg = isYes
                 ? "linear-gradient(135deg,#1e8449,#27AE60)"
                 : "linear-gradient(135deg,#922b21,#C0392B)";
@@ -879,8 +863,8 @@ function build_test_trial(t) {
     const own_label    = `Her own ${inst}`;
     const target_label = `${t.protagonist}'s ${inst}`;
     const verb         = action_verb(t);
-    const _kid_src     = `images/faces/${t.protagonist.toLowerCase()}.png`;
-    const _adult_src   = `images/faces/${t.protagonist.toLowerCase()}_adult.png`;
+    const _kid_src     = `${BASE_URL}images/faces/${t.protagonist.toLowerCase()}.png`;
+    const _adult_src   = `${BASE_URL}images/faces/${t.protagonist.toLowerCase()}_adult.png`;
     sub.push(two_option_trial({
         audio_src: memory_audio(t),
         // Audio asks the question; no on-screen text.
@@ -1008,29 +992,29 @@ const _trial_question_audios = TRIALS.flatMap(t => {
 // Face-choice images used on the memory-check buttons (one pair per cell).
 const _trial_face_images = TRIALS.flatMap(t => {
     const n = t.protagonist.toLowerCase();
-    return [`images/faces/${n}.png`, `images/faces/${n}_adult.png`];
+    return [`${BASE_URL}images/faces/${n}.png`, `${BASE_URL}images/faces/${n}_adult.png`];
 });
 
 const preload = {
     type: jsPsychPreload,
     audio: [
-        "audio/fox_intro.mp3", "audio/fox_pie_intro.mp3",
-        "audio/intro_mom.mp3", "audio/intro_teacher.mp3",
+        BASE_URL + "audio/fox_intro.mp3", BASE_URL + "audio/fox_pie_intro.mp3",
+        BASE_URL + "audio/intro_mom.mp3", BASE_URL + "audio/intro_teacher.mp3",
         ..._trial_question_audios,
-        "audio/q_certainty_ok.mp3", "audio/q_certainty_notok.mp3",
-        "audio/q_protag_certainty_ok.mp3", "audio/q_protag_certainty_notok.mp3",
-        "audio/fox_pie_slice_first.mp3", "audio/fox_pie_slice_more.mp3",
-        "audio/fox_pie_slice_more_yum.mp3",
-        "audio/fox_button_training.mp3",
-        "audio/q_attention_intro.mp3",
-        "audio/thanks.mp3"
+        BASE_URL + "audio/q_certainty_ok.mp3", BASE_URL + "audio/q_certainty_notok.mp3",
+        BASE_URL + "audio/q_protag_certainty_ok.mp3", BASE_URL + "audio/q_protag_certainty_notok.mp3",
+        BASE_URL + "audio/fox_pie_slice_first.mp3", BASE_URL + "audio/fox_pie_slice_more.mp3",
+        BASE_URL + "audio/fox_pie_slice_more_yum.mp3",
+        BASE_URL + "audio/fox_button_training.mp3",
+        BASE_URL + "audio/q_attention_intro.mp3",
+        BASE_URL + "audio/thanks.mp3"
     ],
     video: [
-        "videos/girls_mom_intro.m4v", "videos/girls_teacher_intro.m4v",
+        BASE_URL + "videos/girls_mom_intro.m4v", BASE_URL + "videos/girls_teacher_intro.m4v",
         ...TRIALS.map(trial_video_path)
     ],
     images: [
-        "images/thumbsup.png", "images/thumbsdown.png",
+        BASE_URL + "images/thumbsup.png", BASE_URL + "images/thumbsdown.png",
         ..._trial_face_images
     ],
     auto_preload: false,
@@ -1070,12 +1054,77 @@ const email = {
     data: { name: "email_for_payment" }
 };
 
-const transition_to_study = {
+// Parent-facing directions + audio test. Replaces the old "transition_to_study"
+// screen. Also the point at which the fox is first revealed — she was hidden
+// through the CHS video-config + consent frames so parents could focus on setup.
+const directions_and_audio_check = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<p style="font-size: 40px; margin: 22px auto; line-height: 1.25; max-width: 900px;">
-        Thank you for participating in our study and contributing to our research :) Your child can begin the study whenever they are ready!
-        </p>`,
-    choices: next_button("Start")
+    stimulus: `
+        <div style="max-width: 820px; margin: 30px auto 20px; font-size: 22px; line-height: 1.5; text-align: left; color: #222;">
+          <h2 style="text-align: center; font-size: 34px; margin: 0 0 20px;">Thank you!</h2>
+          <p style="text-align: center; font-size: 22px; color: #444; margin-bottom: 28px;">
+            A few things before your child begins:
+          </p>
+          <ul style="margin: 0 0 32px 24px; font-size: 22px;">
+            <li style="margin-bottom: 10px;">Your child will watch <b>6 short videos</b> and answer some simple questions from Ms. Fox.</li>
+            <li style="margin-bottom: 10px;">The whole study takes about <b>15 minutes</b>.</li>
+            <li>Please <b>let your child answer on their own</b> — you can sit nearby, but try not to guide their answers.</li>
+          </ul>
+          <div style="background: #f0f7fb; border: 2px solid #4a90b8; padding: 24px; border-radius: 12px; text-align: center; margin-bottom: 24px;">
+            <p style="font-size: 22px; margin: 0 0 10px;"><b>Quick sound check</b></p>
+            <p style="font-size: 19px; margin: 0 0 20px; color: #555;">
+              Please turn your sound ON, then click below to hear Ms. Fox.
+            </p>
+            <button id="lick4-sound-test" type="button"
+                    style="font-size: 22px; padding: 14px 30px; cursor: pointer; background: #2a6f97; color: white; border: none; border-radius: 8px; font-weight: 600;">
+              🔊 Play test sound
+            </button>
+            <p id="lick4-sound-status" style="margin: 20px 0 0; font-size: 18px; color: #666; min-height: 24px;">
+              Click the button and listen for Ms. Fox's voice.
+            </p>
+          </div>
+        </div>`,
+    choices: ["Ready to start"],
+    data: { name: "directions_and_audio_check" },
+    on_load: function() {
+        // Reveal the fox from this point onward.
+        window._lick4FoxVisible = true;
+        const fc = document.getElementById('lick4-narrator-container');
+        if (fc) fc.classList.remove('hidden');
+
+        // Lock "Ready to start" until the parent has played the test audio.
+        const nextBtns = () => Array.from(document.querySelectorAll('button.jspsych-btn'));
+        nextBtns().forEach(b => { b.disabled = true; b.style.opacity = '0.4'; });
+
+        const btn = document.getElementById('lick4-sound-test');
+        const status = document.getElementById('lick4-sound-status');
+        // Play only the first ~2s of fox_intro so this is a snappy sound check,
+        // not a full listen. Swap to a dedicated audio/audio_check.mp3 later if
+        // you record one (and drop the setTimeout below).
+        const SOUND_TEST_MS = 2000;
+        btn.onclick = () => {
+            const a = new Audio(BASE_URL + "audio/fox_intro.mp3");
+            btn.disabled = true;
+            btn.style.opacity = '0.55';
+            status.textContent = "🔊 Playing…";
+            let cutoff;
+            a.play().then(() => {
+                cutoff = setTimeout(() => {
+                    a.pause();
+                    status.innerHTML = "✓ If you heard Ms. Fox, click <b>Ready to start</b> below.";
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.textContent = "🔊 Play again";
+                    nextBtns().forEach(b => { b.disabled = false; b.style.opacity = '1'; });
+                }, SOUND_TEST_MS);
+            }).catch(() => {
+                clearTimeout(cutoff);
+                status.innerHTML = "⚠️ Couldn't play. Check your browser's sound permissions and try again.";
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            });
+        };
+    }
 };
 
 // === STORY FRAMES (intro + warmup + outro) =====================
@@ -1087,14 +1136,17 @@ const fox_intro = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <audio autoplay class="fox-intro-audio">
-            <source src="audio/fox_intro.mp3" type="audio/mpeg">
+            <source src="${BASE_URL}audio/fox_intro.mp3" type="audio/mpeg">
         </audio>
         <div id="fox-intro-spacer" style="height: 460px;"></div>`,
     choices: next_button(),
     data: { name: "fox_intro" },
     on_load: function() {
+        // Defensive: ensure the fox is visible (normally revealed on the
+        // preceding directions_and_audio_check screen).
+        window._lick4FoxVisible = true;
         const c = document.getElementById('lick4-narrator-container');
-        if (c) c.classList.add('intro-center');
+        if (c) { c.classList.remove('hidden'); c.classList.add('intro-center'); }
 
         const audio = document.querySelector('audio.fox-intro-audio');
         const btns  = () => document.querySelectorAll('button.jspsych-btn');
@@ -1125,7 +1177,7 @@ const pie_intro = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <audio autoplay class="fox-pie-intro-audio">
-            <source src="audio/fox_pie_intro.mp3" type="audio/mpeg">
+            <source src="${BASE_URL}audio/fox_pie_intro.mp3" type="audio/mpeg">
         </audio>
         <div style="height: 460px;"></div>`,
     choices: next_button(),
@@ -1168,8 +1220,8 @@ const intro = {
     type: jsPsychHtmlButtonResponse,
     stimulus: function() {
         const intro_audio = CB_RELATION === "Mom"
-            ? "audio/intro_mom.mp3"
-            : "audio/intro_teacher.mp3";
+            ? BASE_URL + "audio/intro_mom.mp3"
+            : BASE_URL + "audio/intro_teacher.mp3";
         return `<audio autoplay class="welcome-audio">
                     <source src="${intro_audio}" type="audio/mpeg">
                 </audio>
@@ -1209,8 +1261,8 @@ const attention_intro = {
     },
     stimulus: function() {
         const vid = CB_RELATION === "Mom"
-            ? "videos/girls_mom_intro.m4v"
-            : "videos/girls_teacher_intro.m4v";
+            ? BASE_URL + "videos/girls_mom_intro.m4v"
+            : BASE_URL + "videos/girls_teacher_intro.m4v";
         return `<video src="${vid}"
                        data-attn-intro-video
                        autoplay playsinline
@@ -1236,7 +1288,7 @@ const attention_intro = {
             btns().forEach(b => { b.disabled = false; b.style.visibility = "visible"; });
             // Play the manipulation-check question audio the moment the
             // buttons reveal so the kid hears what to answer.
-            const a = new Audio("audio/q_attention_intro.mp3");
+            const a = new Audio(BASE_URL + "audio/q_attention_intro.mp3");
             a.play().catch(() => {});
         };
         if (video) {
@@ -1262,7 +1314,7 @@ const button_training = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
         <audio autoplay class="button-training-audio">
-            <source src="audio/fox_button_training.mp3" type="audio/mpeg">
+            <source src="${BASE_URL}audio/fox_button_training.mp3" type="audio/mpeg">
         </audio>
         <div style="margin-top: 30px; display: flex; justify-content: center; gap: 60px;">
             <div style="background:linear-gradient(135deg,#ff9436,#ed6b00);color:white;padding:14px 30px;border-radius:16px;font-weight:700;font-size:26px;display:inline-flex;align-items:center;gap:10px;line-height:1;box-shadow:0 4px 10px rgba(237,107,0,0.30);">
@@ -1348,7 +1400,7 @@ timeline.push(enter_fullscreen);
 timeline.push(video_config);
 timeline.push(video_consent);
 timeline.push(start_rec);
-timeline.push(transition_to_study);
+timeline.push(directions_and_audio_check);
 
 // study intro
 timeline.push(fox_intro);
