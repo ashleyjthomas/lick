@@ -186,21 +186,25 @@ function trial_narration_audio_path(t) {
     if (typeof document === 'undefined') return;
     if (document.getElementById('lick4-narrator-container')) return;
 
-    // Twemoji fox 🦊 (CC-BY 4.0, Twitter), with a small animated mouth ellipse
-    // at the bottom so the .fox-mouth talking animation still plays.
-    const FOX_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="100%" height="100%"
-     style="overflow: visible;">
-  <path fill="#F4900C" d="M13.431 9.802c.658 2.638-8.673 10.489-11.244 4.098C.696 10.197-.606 2.434.874 2.065c1.48-.368 11.9 5.098 12.557 7.737z"/>
-  <path fill="#A0041E" d="M11.437 10.355c.96 1.538-1.831 4.561-3.368 5.522-1.538.961-2.899-.552-4.414-4.414-.662-1.689-1.666-6.27-1.103-6.622.562-.351 7.924 3.976 8.885 5.514z"/>
-  <path fill="#F4900C" d="M22.557 9.802C21.9 12.441 31.23 20.291 33.802 13.9c1.49-3.703 2.792-11.466 1.312-11.835-1.48-.368-11.899 5.098-12.557 7.737z"/>
-  <path fill="#A0041E" d="M24.552 10.355c-.96 1.538 1.831 4.561 3.368 5.522 1.537.961 2.898-.552 4.413-4.414.662-1.688 1.666-6.269 1.104-6.621-.563-.352-7.924 3.975-8.885 5.513z"/>
-  <path fill="#F18F26" d="M32.347 26.912c0-.454-.188-1.091-.407-1.687.585.028 1.519.191 2.77.817-.008-.536-.118-.984-.273-1.393.041.02.075.034.116.055-1.103-3.31-3.309-5.517-3.309-5.517h2.206c-2.331-4.663-4.965-8.015-8.075-9.559-1.39-.873-3.688-1.338-7.373-1.339h-.003c-3.695 0-5.996.468-7.385 1.346-3.104 1.547-5.734 4.896-8.061 9.552H4.76s-2.207 2.206-3.311 5.517c.03-.015.055-.025.084-.04-.201.392-.307.847-.282 1.377 1.263-.632 2.217-.792 2.813-.818-.189.513-.343 1.044-.386 1.475-.123.371-.191.812-.135 1.343C6.75 26.584 8.25 26.792 10 27.667 11.213 31.29 14.206 34 18.001 34c3.793 0 6.746-2.794 7.958-6.416 1.458-1.25 3.708-.875 6.416.416.066-.414.036-.773-.036-1.093l.008.005z"/>
-  <path fill="#FFD983" d="M31.243 23.601c.006 0 1.108.003 3.309 1.103-1.249-2.839-7.525-4.07-9.931-3.291-1.171 1.954-1.281 5.003-3.383 6.622-1.741 1.431-4.713 1.458-6.479 0-2.345-1.924-2.559-5.813-3.382-6.622-2.407-.781-8.681.454-9.931 3.291 2.201-1.101 3.304-1.103 3.309-1.103 0 .001-1.103 2.208-1.103 3.311l.001-.001v.001c2.398-1.573 5.116-2.271 7.429-.452 1.666 7.921 12.293 7.545 13.833 0 2.314-1.818 5.03-1.122 7.429.452v-.001l.001.001c.002-1.103-1.101-3.311-1.102-3.311z"/>
-  <path fill="#272B2B" d="M11 17s0-1.5 1.5-1.5S14 17 14 17v1.5s0 1.5-1.5 1.5-1.5-1.5-1.5-1.5V17zm11 0s0-1.5 1.5-1.5S25 17 25 17v1.5s0 1.5-1.5 1.5-1.5-1.5-1.5-1.5V17z"/>
-  <path fill="#272B2B" d="M14.939 27.808c-1.021.208 2.041 3.968 3.062 3.968 1.02 0 4.082-3.76 3.062-3.968-1.021-.208-5.103-.208-6.124 0z"/>
-  <ellipse class="fox-mouth" cx="18" cy="33" rx="0.7" ry="0.35" fill="#272B2B"/>
-</svg>`;
+    // Fox narrator artwork, sliced out of the rigged Character Animator
+    // puppet (POW Studios) into flat PNGs — see charanim/ for the source
+    // PSD and the export script. Three face plates (eyes open / mid-blink /
+    // shut) plus one PNG per mouth shape, which sits on top of the plate.
+    const ART = BASE_URL + "images/narrator/";
+    // Mouth position inside the 470x420 face plate, as percentages so the
+    // whole thing scales with the container.
+    const MOUTH_BOX = { left: 37.87, top: 76.67, width: 18.51, height: 11.90 };
+    const VISEMES = ['Neutral','Ah','D','Ee','F','L','M','Oh','R','S','Uh',
+                     'WOo','Smile','Surprised'];
+    const PLATES  = { open: 'base.png', half: 'base_blink1.png', shut: 'base_blink2.png' };
+
+    // Preload every plate and mouth shape so swaps never flash.
+    Object.values(PLATES).forEach(f => { const i = new Image(); i.src = ART + f; });
+    VISEMES.forEach(v => { const i = new Image(); i.src = ART + `mouth_${v}.png`; });
+
+    const FOX_HTML = `
+        <img class="fox-plate" src="${ART}${PLATES.open}" alt="">
+        <img class="fox-mouth-img" src="${ART}mouth_Neutral.png" alt="">`;
 
     const css = `
         /* Fox: persistent layer. Default position is right side, up near
@@ -212,8 +216,8 @@ function trial_narration_audio_path(t) {
             top: 110px;
             bottom: auto;
             left: auto;
-            width: 170px;
-            height: 185px;
+            width: 200px;
+            height: 179px;   /* 470x420 art aspect */
             z-index: 9;
             pointer-events: none;
             filter: drop-shadow(0 8px 18px rgba(0,0,0,0.20));
@@ -231,12 +235,24 @@ function trial_narration_audio_path(t) {
             bottom: auto;
             left: 50%;
             top:  50%;
-            width:  360px;
-            height: 392px;
-            margin-left: -180px;
-            margin-top:  -196px;
+            width:  420px;
+            height: 376px;
+            margin-left: -210px;
+            margin-top:  -188px;
         }
-        .fox-inner { width: 100%; height: 100%; }
+        .fox-inner { position: relative; width: 100%; height: 100%; }
+        .fox-inner .fox-plate {
+            display: block; width: 100%; height: 100%;
+        }
+        /* Mouth shape overlays the plate. Each mouth PNG already contains the
+           surrounding muzzle, so it covers the plate's blank mouth area. */
+        .fox-inner .fox-mouth-img {
+            position: absolute;
+            left:   ${MOUTH_BOX.left}%;
+            top:    ${MOUTH_BOX.top}%;
+            width:  ${MOUTH_BOX.width}%;
+            height: ${MOUTH_BOX.height}%;
+        }
         #lick4-narrator-container.speaking .fox-inner {
             animation: fox-bob 1.4s ease-in-out infinite;
         }
@@ -332,21 +348,8 @@ function trial_narration_audio_path(t) {
             50%      { transform: scale(1.25) rotate( 6deg); }
             75%      { transform: scale(1.35) rotate(-4deg); }
         }
-        /* Mouth opens downward (jaw drops) — anchor at top edge of the
-           mouth ellipse so scaleY only stretches the bottom half. */
-        .fox-mouth {
-            transform-box: fill-box;
-            transform-origin: 50% 0%;
-        }
-        #lick4-narrator-container.speaking .fox-mouth {
-            animation: fox-talk 0.5s ease-in-out infinite;
-        }
-        @keyframes fox-talk {
-            0%, 100% { transform: scaleY(1); }
-            50%      { transform: scaleY(2.4); }
-        }
         @media (max-width: 900px) {
-            #lick4-narrator-container { width: 120px; height: 132px; right: 12px; top: 80px; }
+            #lick4-narrator-container { width: 140px; height: 125px; right: 12px; top: 80px; }
             #lick4-pie { width: 90px; height: 90px; right: 12px; bottom: 12px; }
         }
     `;
@@ -387,7 +390,7 @@ function trial_narration_audio_path(t) {
             // Re-mounts (if anything ever removes the container) respect the
             // current visibility state via the flag.
             if (!window._lick4FoxVisible) c.className = 'hidden';
-            c.innerHTML = `<div class="fox-inner">${FOX_SVG}</div>`;
+            c.innerHTML = `<div class="fox-inner">${FOX_HTML}</div>`;
         }
         if (c.parentNode !== document.documentElement) {
             document.documentElement.appendChild(c);
@@ -424,55 +427,86 @@ function trial_narration_audio_path(t) {
             (document.head || document.documentElement).appendChild(s);
         }
 
-        const c = ensureMounted();
+        ensureMounted();
 
-        // Pre-computed speech regions per long video (offline silence
-        // detection via ffmpeg). Each value is a list of [start, end]
-        // pairs in seconds during which there's actual narration sound.
-        // For files NOT in this map (short audio clips, etc.) we fall
-        // back to "is playing = speaking".
-        const SPEECH_REGIONS = {
-            [BASE_URL + "videos/pro_pres_mom.m4v"]: [[0.41,1.73],[2.39,5.71],[6.51,8.29],[14.85,17.89],[23.95,26.59],[32.13,34.99]],
-            [BASE_URL + "videos/pro_pres_teacher.m4v"]: [[0.0,1.69],[2.27,5.59],[6.63,8.29],[14.37,17.79],[24.63,26.87],[31.73,34.61]],
-            [BASE_URL + "videos/pro_abs_mom.m4v"]: [[0.0,1.95],[2.31,5.61],[6.31,8.15],[13.69,15.23],[17.73,20.29],[25.75,28.85],[32.85,37.03]],
-            [BASE_URL + "videos/pro_abs_teacher.m4v"]: [[0.0,1.93],[2.43,5.77],[6.47,8.51],[14.07,15.67],[17.97,21.35],[27.51,29.77],[33.59,36.81]],
-            [BASE_URL + "videos/sal_pres_mom.m4v"]: [[0.0,1.85],[2.29,5.91],[6.59,8.71],[15.69,18.41],[18.91,22.15],[29.23,34.49]],
-            [BASE_URL + "videos/sal_pres_teacher.m4v"]: [[0.0,1.75],[2.37,6.15],[6.87,9.05],[16.17,18.87],[19.49,21.97],[30.33,35.37]],
-            [BASE_URL + "videos/sal_abs_mom.m4v"]: [[0.65,1.85],[2.51,5.59],[6.29,7.99],[13.15,14.63],[15.33,19.01],[27.63,30.75]],
-            [BASE_URL + "videos/sal_abs_teacher.m4v"]: [[0.0,1.45],[2.05,5.11],[5.97,7.75],[13.07,14.47],[15.03,16.45],[16.71,19.15],[26.73,29.95]],
-            [BASE_URL + "videos/tch_pres_mom.m4v"]: [[0.89,2.29],[2.61,6.57],[7.61,9.23],[17.41,20.21],[20.71,23.01],[29.85,32.39]],
-            [BASE_URL + "videos/tch_pres_teacher.m4v"]: [[0.63,1.77],[2.11,4.93],[5.73,7.11],[15.25,17.85],[18.61,21.19],[25.19,29.53]],
-            [BASE_URL + "videos/tch_abs_mom.m4v"]: [[0.59,1.89],[2.21,5.29],[6.01,7.55],[13.79,15.27],[15.59,16.99],[17.11,19.33],[26.01,29.41]],
-            [BASE_URL + "videos/tch_abs_teacher.m4v"]: [[0.0,1.45],[1.91,5.07],[5.77,7.29],[13.87,19.27],[26.27,29.51],[36.73,38.43]],
-            [BASE_URL + "videos/girls_mom_intro.m4v"]: [[0.53,5.47],[6.47,9.85]],
-            [BASE_URL + "videos/girls_teacher_intro.m4v"]: [[0.0,7.81]]
-        };
+        // Pre-computed mouth-shape timelines, one per narration asset
+        // (every audio clip and every trial video). Built offline from each
+        // file's loudness envelope — see charanim/ for the generator. Each
+        // track is a string with one hex character per frame; the character
+        // indexes into VISEMES. Keys are repo-relative paths, matched against
+        // the media element's URL with endsWith().
+        let LIPSYNC = null;
+        fetch(ART + "lipsync.json")
+            .then(r => r.json())
+            .then(j => { LIPSYNC = j; })
+            .catch(() => { LIPSYNC = null; });   // falls back to a generic flap
 
-        function regionFor(m) {
+        function trackFor(m) {
+            if (!LIPSYNC) return null;
             const url = m.currentSrc || m.src || "";
-            for (const key in SPEECH_REGIONS) {
-                if (url.endsWith(key)) return SPEECH_REGIONS[key];
+            for (const key in LIPSYNC.tracks) {
+                if (url.endsWith(key)) return LIPSYNC.tracks[key];
             }
             return null;
         }
-        function inSpeech(m) {
-            const regs = regionFor(m);
-            if (!regs) return null;  // unknown file → caller falls back to "playing"
-            const t = m.currentTime;
-            return regs.some(r => t >= r[0] && t <= r[1]);
+
+        // Shapes cycled when we have no timeline for a file (shouldn't happen
+        // for study assets, but keeps the mouth alive rather than frozen).
+        const FLAP = ['Ah','Ee','Neutral','Oh','Uh','Neutral'];
+
+        function currentMouth() {
+            let playing = null;
+            document.querySelectorAll('audio, video').forEach(m => {
+                if (!playing && !m.paused && !m.ended && m.readyState >= 2) playing = m;
+            });
+            if (!playing) return { shape: 'Neutral', speaking: false };
+
+            const tl = trackFor(playing);
+            if (tl) {
+                const i = Math.floor(playing.currentTime * 1000 / LIPSYNC.frame_ms);
+                if (i >= 0 && i < tl.length) {
+                    return { shape: LIPSYNC.visemes[parseInt(tl[i], 16)], speaking: true };
+                }
+                return { shape: 'Neutral', speaking: true };
+            }
+            return { shape: FLAP[Math.floor(playing.currentTime * 8) % FLAP.length],
+                     speaking: true };
         }
 
-        function tick() {
-            let speaking = false;
-            document.querySelectorAll('audio, video').forEach(m => {
-                const playing = !m.paused && !m.ended && m.readyState >= 2;
-                if (!playing) return;
-                const sp = inSpeech(m);
-                // null = no precomputed region info → use "playing" as
-                // speaking proxy (short clips with no real silences).
-                if (sp === null || sp) speaking = true;
-            });
-            c.classList.toggle('speaking', speaking);
+        // Blink every 2.5–6s: half-shut, shut, half-shut, open.
+        let plate = 'open', nextBlink = performance.now() + 2500, blinkAt = [];
+        function blinkTick(now) {
+            if (blinkAt.length && now >= blinkAt[0].t) {
+                plate = blinkAt.shift().p;
+            } else if (!blinkAt.length && now > nextBlink) {
+                plate = 'half';
+                blinkAt = [{ t: now +  50, p: 'shut' },
+                           { t: now + 130, p: 'half' },
+                           { t: now + 180, p: 'open' }];
+                nextBlink = now + 2500 + Math.random() * 3500;
+            }
+        }
+
+        function tick(now) {
+            blinkTick(now);
+            const { shape, speaking } = currentMouth();
+            // Look the container up fresh each frame — jsPsych can wipe and
+            // remount it, which would leave a captured reference stale. State
+            // lives on the elements (data-*) for the same reason.
+            const box = document.getElementById('lick4-narrator-container');
+            if (box) {
+                const mouthEl = box.querySelector('.fox-mouth-img');
+                const plateEl = box.querySelector('.fox-plate');
+                if (mouthEl && mouthEl.dataset.shape !== shape) {
+                    mouthEl.src = ART + `mouth_${shape}.png`;
+                    mouthEl.dataset.shape = shape;
+                }
+                if (plateEl && plateEl.dataset.plate !== plate) {
+                    plateEl.src = ART + PLATES[plate];
+                    plateEl.dataset.plate = plate;
+                }
+                box.classList.toggle('speaking', speaking);
+            }
             requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);

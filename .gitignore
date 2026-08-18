@@ -11,6 +11,10 @@ videos/OLD/
 audio/*.m4a
 audio/*.mov
 
+# Character Animator working files (WAVs regenerate from audio/*.mp3;
+# puppet art is third-party and stays out of this public repo)
+charanim/
+
 # Misc
 .DS_Store
 .claude/
