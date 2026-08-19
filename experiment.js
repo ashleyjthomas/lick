@@ -261,16 +261,17 @@ function trial_narration_audio_path(t) {
             50%      { transform: translateY(-3px) rotate( 0.6deg); }
         }
 
-        /* Pie progress: 6 wedges that fill in as trials complete. Sits
-           in the bottom-right corner. After the last trial, the
-           .feasting class scales the pie up and shifts it toward the
-           fox where it gets "eaten". */
+        /* Pie progress: an empty tin that fills with one crusted slice per
+           completed trial. Sits in the bottom-LEFT corner — the fox now
+           occupies the right side, so they no longer share an edge. After
+           the last trial the .feasting class flies the pie to the fox,
+           where it gets "eaten". */
         #lick4-pie {
             position: fixed;
-            right: 28px;
+            left: 28px;
             bottom: 28px;
             top: auto;
-            left: auto;
+            right: auto;
             margin: 0;
             width: 130px;
             height: 130px;
@@ -290,32 +291,32 @@ function trial_narration_audio_path(t) {
             filter: drop-shadow(0 4px 10px rgba(0,0,0,0.18));
         }
         #lick4-pie.visible { opacity: 1; }
+        /* Tin, plate and slice colours. Empty slots stay visible as dashed
+           wedges so "how many left to earn" is readable at corner size. */
+        #lick4-pie .pie-plate     { fill: #f5efe3; }
+        #lick4-pie .pie-tin-outer { fill: #8d5a28; }
+        #lick4-pie .pie-tin-rim   { fill: #b9793d; }
+        #lick4-pie .pie-tin-inner { fill: #e6d6bb; }
+        #lick4-pie .pie-tin-lip   { fill: none; stroke: #8d5a28; stroke-width: 2; opacity: .35; }
+        #lick4-pie .pie-slot {
+            fill: none; stroke: #cbbb9c; stroke-width: 1.8; stroke-dasharray: 4 4;
+            transition: opacity 0.4s ease-in-out;
+        }
         #lick4-pie .pie-slice {
-            fill: #efe4d2;
-            stroke: #7a4a1c;
-            stroke-width: 2;
-            transition: fill 0.6s ease-in-out;
+            opacity: 0;
+            transition: opacity 0.55s ease-in-out;
         }
-        #lick4-pie[data-done="1"] .pie-slice[data-i="0"],
-        #lick4-pie[data-done="2"] .pie-slice[data-i="0"],
-        #lick4-pie[data-done="2"] .pie-slice[data-i="1"],
-        #lick4-pie[data-done="3"] .pie-slice[data-i="0"],
-        #lick4-pie[data-done="3"] .pie-slice[data-i="1"],
-        #lick4-pie[data-done="3"] .pie-slice[data-i="2"],
-        #lick4-pie[data-done="4"] .pie-slice[data-i="0"],
-        #lick4-pie[data-done="4"] .pie-slice[data-i="1"],
-        #lick4-pie[data-done="4"] .pie-slice[data-i="2"],
-        #lick4-pie[data-done="4"] .pie-slice[data-i="3"],
-        #lick4-pie[data-done="5"] .pie-slice[data-i="0"],
-        #lick4-pie[data-done="5"] .pie-slice[data-i="1"],
-        #lick4-pie[data-done="5"] .pie-slice[data-i="2"],
-        #lick4-pie[data-done="5"] .pie-slice[data-i="3"],
-        #lick4-pie[data-done="5"] .pie-slice[data-i="4"],
-        #lick4-pie[data-done="6"] .pie-slice {
-            fill: #d4843f;
+        #lick4-pie .pie-fill    { fill: #eda945; }
+        #lick4-pie .pie-crust   { fill: none; stroke: #a9601f; stroke-width: 8.5; stroke-linecap: round; }
+        #lick4-pie .pie-edge    { fill: none; stroke: #cf8526; stroke-width: 1.3; }
+        #lick4-pie .pie-lattice { stroke: #a9601f; stroke-width: 3.6; stroke-linecap: round; opacity: .7; }
+        #lick4-pie .pie-steam   { opacity: 0; transition: opacity 0.9s ease-in-out 0.35s; }
+        #lick4-pie .pie-steam path {
+            fill: none; stroke: #b9ae9c; stroke-width: 3; stroke-linecap: round;
         }
+        /* Per-count reveal rules are generated in JS (see PIE_STATE_CSS) —
+           6 counts x 6 slices is too many to hand-write without drift. */
         #lick4-pie.feasting {
-            transform: translate(40px, -240px) scale(1.6);
             opacity: 0;
             transition: transform 1.6s ease-in-out, opacity 1.6s ease-in-out 0.6s;
         }
@@ -350,31 +351,69 @@ function trial_narration_audio_path(t) {
         }
         @media (max-width: 900px) {
             #lick4-narrator-container { width: 140px; height: 125px; right: 12px; top: 80px; }
-            #lick4-pie { width: 90px; height: 90px; right: 12px; bottom: 12px; }
+            #lick4-pie { width: 90px; height: 90px; left: 12px; bottom: 12px; }
         }
     `;
 
-    // Build the 6-slice pie SVG. Slices share a center at (60,60),
-    // r=50, each is 60° (pi/3 radians). data-i = slice index 0..5 so
-    // the CSS rules can light them up progressively.
+    // Build the pie SVG: a plate, an empty tin, six dashed empty slots, and
+    // six filled slices layered on top. Slices share a centre at (60,60) with
+    // r=43; each is 60°. data-i = 0..5 so the generated CSS can reveal them
+    // one at a time. Steam only appears once all six are in.
     function buildPieSVG() {
-        const cx = 60, cy = 60, r = 50;
-        const slices = [];
+        const cx = 60, cy = 60, r = 43;
+        const pt = (ang, rad) =>
+            `${(cx + rad * Math.cos(ang)).toFixed(1)},${(cy + rad * Math.sin(ang)).toFixed(1)}`;
+        const ang = i => (i / 6) * 2 * Math.PI - Math.PI / 2;
+        const wedge = i => `M ${cx},${cy} L ${pt(ang(i), r)} A ${r},${r} 0 0 1 ${pt(ang(i + 1), r)} Z`;
+        const crust = i => `M ${pt(ang(i), r)} A ${r},${r} 0 0 1 ${pt(ang(i + 1), r)}`;
+
+        let slots = '', slices = '';
         for (let i = 0; i < 6; i++) {
-            const a0 = (i / 6) * 2 * Math.PI - Math.PI / 2;       // start angle
-            const a1 = ((i + 1) / 6) * 2 * Math.PI - Math.PI / 2; // end angle
-            const x0 = cx + r * Math.cos(a0), y0 = cy + r * Math.sin(a0);
-            const x1 = cx + r * Math.cos(a1), y1 = cy + r * Math.sin(a1);
-            const largeArc = 0; // each slice <180°
-            slices.push(
-                `<path class="pie-slice" data-i="${i}"
-                       d="M ${cx},${cy} L ${x0.toFixed(2)},${y0.toFixed(2)}
-                          A ${r},${r} 0 ${largeArc} 1 ${x1.toFixed(2)},${y1.toFixed(2)} Z"/>`
-            );
+            slots += `<path class="pie-slot" data-i="${i}" d="${wedge(i)}"/>`;
+            const mid = ang(i + 0.5);
+            slices +=
+                `<g class="pie-slice" data-i="${i}">` +
+                    `<path class="pie-fill"  d="${wedge(i)}"/>` +
+                    `<path class="pie-crust" d="${crust(i)}"/>` +
+                    `<path class="pie-edge"  d="${wedge(i)}"/>` +
+                    `<line class="pie-lattice" x1="${pt(mid, 13).split(',')[0]}" y1="${pt(mid, 13).split(',')[1]}"` +
+                          ` x2="${pt(mid, 36).split(',')[0]}" y2="${pt(mid, 36).split(',')[1]}"/>` +
+                `</g>`;
         }
-        return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">${slices.join('')}</svg>`;
+        const steam =
+            `<g class="pie-steam">` +
+                `<path d="M 46,12 q 7,-9 0,-15"/>` +
+                `<path d="M 60,7 q 7,-10 0,-17"/>` +
+                `<path d="M 74,12 q 7,-9 0,-15"/>` +
+            `</g>`;
+
+        return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <ellipse class="pie-plate" cx="60" cy="67" rx="57" ry="49"/>
+            <circle class="pie-tin-outer" cx="60" cy="60" r="52"/>
+            <circle class="pie-tin-rim"   cx="60" cy="60" r="49"/>
+            <circle class="pie-tin-inner" cx="60" cy="60" r="44"/>
+            <circle class="pie-tin-lip"   cx="60" cy="60" r="44"/>
+            ${slots}${slices}${steam}
+        </svg>`;
     }
     const PIE_SVG = buildPieSVG();
+
+    // Reveal rules: at data-done="d", slices 0..d-1 are visible and their
+    // empty slots are hidden. Generated rather than hand-written so the two
+    // halves can't drift out of sync.
+    const PIE_STATE_CSS = (function() {
+        let out = '';
+        for (let d = 1; d <= 6; d++) {
+            const on = [], off = [];
+            for (let i = 0; i < d; i++) {
+                on.push(`#lick4-pie[data-done="${d}"] .pie-slice[data-i="${i}"]`);
+                off.push(`#lick4-pie[data-done="${d}"] .pie-slot[data-i="${i}"]`);
+            }
+            out += `${on.join(',')} { opacity: 1; }\n${off.join(',')} { opacity: 0; }\n`;
+        }
+        out += `#lick4-pie[data-done="6"] .pie-steam { opacity: 1; }\n`;
+        return out;
+    })();
 
     const ensureMounted = () => {
         // Append to <html>, not <body>. jsPsych wipes body on init/run,
@@ -416,14 +455,26 @@ function trial_narration_audio_path(t) {
     };
     window.lick4_pie_feast = function() {
         const p = document.getElementById('lick4-pie');
-        if (p) p.classList.add('feasting');
+        if (!p) return;
+        // Fly the finished pie to wherever the fox actually is and let it be
+        // eaten. Measured at call time rather than hard-coded: the pie now
+        // lives bottom-left and the fox top-right, and either can move with
+        // the viewport or the .intro-center pose.
+        const fox = document.getElementById('lick4-narrator-container');
+        if (fox) {
+            const a = p.getBoundingClientRect(), b = fox.getBoundingClientRect();
+            const dx = (b.left + b.width / 2)  - (a.left + a.width / 2);
+            const dy = (b.top  + b.height * 0.62) - (a.top + a.height / 2);
+            p.style.transform = `translate(${dx.toFixed(0)}px, ${dy.toFixed(0)}px) scale(0.55)`;
+        }
+        p.classList.add('feasting');
     };
 
     const inject = () => {
         if (!document.getElementById('lick4-narrator-css')) {
             const s = document.createElement('style');
             s.id = 'lick4-narrator-css';
-            s.textContent = css;
+            s.textContent = css + PIE_STATE_CSS;
             (document.head || document.documentElement).appendChild(s);
         }
 
@@ -1137,7 +1188,14 @@ const directions_and_audio_check = {
         // you record one (and drop the setTimeout below).
         const SOUND_TEST_MS = 2000;
         btn.onclick = () => {
-            const a = new Audio(BASE_URL + "audio/fox_intro.mp3");
+            // Must be IN the document: the narrator's lip-sync driver scans
+            // document.querySelectorAll('audio, video'), so a detached
+            // `new Audio()` plays with the fox sitting frozen.
+            const a = document.createElement('audio');
+            a.src = BASE_URL + "audio/fox_intro.mp3";
+            a.className = 'sound-test-audio';
+            document.body.appendChild(a);
+            a.addEventListener('ended', () => a.remove());
             btn.disabled = true;
             btn.style.opacity = '0.55';
             status.textContent = "🔊 Playing…";
@@ -1288,6 +1346,49 @@ const intro = {
 // Single manipulation check — after the intro video, the kid identifies
 // who's next to the girl (mom vs. teacher). Replaces the per-trial
 // attention check that used to run after every story.
+// === SPOKEN-LABEL BUTTON CUES ==================================
+// The attention check labels its buttons "Mom" and "Teacher" in text, which
+// assumes a 6-year-old can read. Shaking the matching button while the word is
+// spoken links the sound to the button instead.
+//
+// To shake on the actual words, add the time in seconds at which each word is
+// spoken. Left empty, the buttons are offered one at a time after the question
+// finishes, which needs no alignment.
+const WORD_CUES = {
+    // "audio/q_attention_intro.mp3": { Mom: 3.10, Teacher: 4.25 },
+};
+
+(function injectCueCss() {
+    if (document.getElementById('lick4-cue-css')) return;
+    const s = document.createElement('style');
+    s.id = 'lick4-cue-css';
+    s.textContent = `
+        @keyframes lick4-cue-shake {
+            0%,100% { transform: translateX(0)   rotate(0deg)   scale(1); }
+            15%     { transform: translateX(-6px) rotate(-2.5deg) scale(1.06); }
+            35%     { transform: translateX(6px)  rotate(2.5deg)  scale(1.08); }
+            55%     { transform: translateX(-5px) rotate(-2deg)   scale(1.06); }
+            75%     { transform: translateX(4px)  rotate(1.5deg)  scale(1.04); }
+        }
+        button.jspsych-btn.lick4-cued { animation: lick4-cue-shake 0.72s ease-in-out; }
+        button.jspsych-btn.lick4-cued > div { box-shadow: 0 0 0 5px rgba(255,180,60,0.55); }
+    `;
+    (document.head || document.documentElement).appendChild(s);
+})();
+
+// Shake the button whose visible text matches `label`. Matching on text rather
+// than index matters: the two buttons are presented in randomised order.
+function cueLabel(label) {
+    const want = String(label).trim().toLowerCase();
+    document.querySelectorAll('button.jspsych-btn').forEach(b => {
+        if ((b.textContent || '').trim().toLowerCase() !== want) return;
+        b.classList.remove('lick4-cued');
+        void b.offsetWidth;                 // restart the animation
+        b.classList.add('lick4-cued');
+        setTimeout(() => b.classList.remove('lick4-cued'), 900);
+    });
+}
+
 const attention_intro = {
     type: jsPsychHtmlButtonResponse,
     on_start: function() {
@@ -1321,8 +1422,32 @@ const attention_intro = {
         const unlock = () => {
             btns().forEach(b => { b.disabled = false; b.style.visibility = "visible"; });
             // Play the manipulation-check question audio the moment the
-            // buttons reveal so the kid hears what to answer.
-            const a = new Audio(BASE_URL + "audio/q_attention_intro.mp3");
+            // buttons reveal so the kid hears what to answer. It must be IN the
+            // document: the lip-sync driver scans the DOM for playing media, so
+            // a detached `new Audio()` leaves the fox frozen.
+            const a = document.createElement('audio');
+            a.src = BASE_URL + "audio/q_attention_intro.mp3";
+            a.className = 'attn-intro-audio';
+            document.body.appendChild(a);
+            const cues = WORD_CUES["audio/q_attention_intro.mp3"];
+            if (cues) {
+                Object.keys(cues).forEach(label => {
+                    const at = cues[label];
+                    a.addEventListener('timeupdate', function fire() {
+                        if (a.currentTime >= at) {
+                            a.removeEventListener('timeupdate', fire);
+                            cueLabel(label);
+                        }
+                    });
+                });
+                a.addEventListener('ended', () => a.remove());
+            } else {
+                a.addEventListener('ended', () => {
+                    a.remove();
+                    cueLabel("Mom");
+                    setTimeout(() => cueLabel("Teacher"), 750);
+                });
+            }
             a.play().catch(() => {});
         };
         if (video) {
