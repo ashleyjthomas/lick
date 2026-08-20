@@ -1095,7 +1095,10 @@ const preload = {
         BASE_URL + "audio/thanks.mp3"
     ],
     video: [
-        BASE_URL + "videos/girls_mom_intro.m4v", BASE_URL + "videos/girls_teacher_intro.m4v",
+        // Relation is between-subjects, so only the assigned relation's intro
+        // is ever played — fetching both delays the start for nothing.
+        BASE_URL + (CB_RELATION === "Mom" ? "videos/girls_mom_intro.m4v"
+                                          : "videos/girls_teacher_intro.m4v"),
         ...TRIALS.map(trial_video_path)
     ],
     images: [

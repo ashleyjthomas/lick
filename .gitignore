@@ -6,6 +6,8 @@ working_keynote/
 videos/ORIGINAL_VOICE/
 videos/AI_VOICED_ARCHIVE/
 videos/OLD/
+# Pre-compression masters, kept locally in case the re-encode ever needs redoing
+videos/ORIGINAL_QUALITY/
 
 # Raw audio sources (.m4a originals); only the transcoded .mp3s need to ship
 audio/*.m4a

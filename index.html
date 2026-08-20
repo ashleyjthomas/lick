@@ -843,8 +843,14 @@ function build_test_trial(t) {
 // === STORY FRAMES ==============================================
 const preload = {
     type: jsPsychPreload,
-    audio: ["audio/fox_intro.mp3", "audio/fox_pie_intro.mp3", "audio/fox_button_training.mp3", "audio/q_attention_intro.mp3", "audio/intro_mom.mp3", "audio/intro_teacher.mp3"],
-    video: ["videos/girls_mom_intro.m4v", "videos/girls_teacher_intro.m4v",
+    // Relation is between-subjects, so only the assigned relation's intro
+    // video and intro narration are ever played — fetching both wastes a
+    // download before the study can start.
+    audio: ["audio/fox_intro.mp3", "audio/fox_pie_intro.mp3",
+            "audio/fox_button_training.mp3", "audio/q_attention_intro.mp3",
+            CB_RELATION === "Mom" ? "audio/intro_mom.mp3" : "audio/intro_teacher.mp3"],
+    video: [CB_RELATION === "Mom" ? "videos/girls_mom_intro.m4v"
+                                  : "videos/girls_teacher_intro.m4v",
             ...TRIALS.map(trial_video_path)],
     auto_preload: false,
     continue_after_error: true,
