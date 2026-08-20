@@ -965,9 +965,35 @@ const intro = {
 // To shake on the actual words, add the time in seconds at which each word is
 // spoken. Left empty, the buttons are offered one at a time after the question
 // finishes, which needs no alignment. Times are seconds into the clip.
+// Word onsets in "…the girl's mom, or the girl's teacher?", checked by ear
+// against clipped spans of the audio. "mom" is the loud cluster before the
+// comma pause at 6.78–7.05; "teacher" closes the sentence.
 const WORD_CUES = {
-    // "audio/q_attention_intro.mp3": { Mom: 3.10, Teacher: 4.25 },
+    "audio/q_attention_intro.mp3": { Mom: 6.45, Teacher: 7.50 },
 };
+
+// Fire each cue as its word is spoken. Animation frames give frame-accurate
+// timing, but they stop in a backgrounded tab — so timeupdate (~4x a second)
+// backs them up. Both drain one shared queue, so each cue fires exactly once
+// whichever gets there first.
+function scheduleCues(audioEl, cues) {
+    const pending = Object.keys(cues)
+        .map(label => ({ label, at: cues[label] }))
+        .sort((a, b) => a.at - b.at);
+    const drain = () => {
+        while (pending.length && audioEl.currentTime >= pending[0].at) {
+            cueLabel(pending.shift().label);
+        }
+        return pending.length === 0;
+    };
+    (function poll() {
+        if (audioEl.ended || !audioEl.isConnected || drain()) return;
+        requestAnimationFrame(poll);
+    })();
+    audioEl.addEventListener('timeupdate', function tu() {
+        if (drain()) audioEl.removeEventListener('timeupdate', tu);
+    });
+}
 
 (function injectCueCss() {
     if (document.getElementById('lick4-cue-css')) return;
@@ -1037,15 +1063,7 @@ const attention_intro = {
             // time once the question finishes.
             const cues = WORD_CUES["audio/q_attention_intro.mp3"];
             if (cues) {
-                Object.keys(cues).forEach(label => {
-                    const at = cues[label];
-                    a.addEventListener('timeupdate', function fire() {
-                        if (a.currentTime >= at) {
-                            a.removeEventListener('timeupdate', fire);
-                            cueLabel(label);
-                        }
-                    });
-                });
+                scheduleCues(a, cues);
                 a.addEventListener('ended', () => a.remove());
             } else {
                 a.addEventListener('ended', () => {
