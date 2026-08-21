@@ -234,10 +234,12 @@ const debrief = {
         <b>Payment:</b> we will send you a $5 Amazon gift code using the
         email you provided. This can take up to two weeks, but if you
         have not received one by then, please let us know.
-        <br style="line-height:60px;">
-        To submit this study, you can click the &ldquo;submit&rdquo; button.
         </p>`,
-    choices: ['<p style="font-size: 40px;">Submit</p>'],
+    // A final button has to exist: clicking it ends the jsPsych timeline, which
+    // is how CHS learns the session is complete. Labelled "Finish" and left at
+    // normal size, matching RELKIND — the old oversized "Submit" read as a
+    // second submission step on top of the one CHS provides.
+    choices: ["Finish"],
     data: { name: "debrief" }
 };
 
