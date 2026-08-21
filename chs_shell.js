@@ -164,21 +164,21 @@ const game_complete = (function() {
     let messageHandler = null;
     return {
         type: jsPsychHtmlButtonResponse,
-        // This is the WAITING screen — the child is still in the other tab. It
-        // must not read as "finished", or a parent who glances back mid-game
-        // thinks they're done. When the game really finishes it posts
-        // GAME_COMPLETE and this trial ends itself, so nobody should sit here
-        // reading it afterwards.
+        // Written for the only person who ever actually reads it. While the
+        // child plays, this tab sits in the background unread; when the game
+        // finishes it posts GAME_COMPLETE and this trial ends itself, so they
+        // land on the email screen instead. Anyone looking at this text has
+        // therefore come back to this tab early, or the handshake failed.
         stimulus: `
             <div style="text-align:center; max-width: 560px; margin: 0 auto;">
-                <h2>The game is open in another tab</h2>
+                <h2>Is the game finished?</h2>
                 <p style="font-size:19px; line-height:1.55;">
-                    Your child is playing there now. <strong>Please leave this tab
-                    open</strong> — the recording is happening here.
+                    If your child is still playing, switch back to the game tab
+                    and finish it. <strong>Leave this tab open</strong> — the
+                    recording is happening here.
                 </p>
                 <p style="font-size:19px; line-height:1.55; margin-top:16px;">
-                    When the game finishes, this page moves on by itself. If it
-                    doesn't, click <strong>Continue</strong>.
+                    If the game is already done, click <strong>Continue</strong>.
                 </p>
             </div>`,
         choices: ["Continue"],
