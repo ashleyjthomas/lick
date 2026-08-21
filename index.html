@@ -90,7 +90,7 @@ const SHEETS = (function() {
     const COLS = ['study','participantId','chsId','firstName','childAge',
                   'relationCondition',
                   'startedAt','finishedAt','nTrialsCompleted',
-                  'attentionAnswer','attentionCorrect',
+                  'attentionAnswer','attentionCorrect','attentionAttempts',
                   'audioFailures',
                   'userAgent']
         .concat(...Array.from({ length: NTRIALS }, (_, i) =>
@@ -122,8 +122,18 @@ const SHEETS = (function() {
             relationCondition: (typeof CB_RELATION !== 'undefined') ? CB_RELATION : '',
             startedAt: startedAt,
             finishedAt: final ? new Date().toISOString() : '',
-            attentionAnswer:  pick(rows, 'attention_intro', undefined),
-            attentionCorrect: pick(rows, 'attention_intro', undefined, 'correct'),
+            // Final attempt wins: a child who gets it wrong hears the reminder
+            // and is asked again, so the last answer is the one that counts.
+            // attentionAttempts of 1 means they got it first time.
+            attentionAnswer:  (() => {
+                const a = rows.filter(r => r.name === 'attention_intro' || r.name === 'attention_retry');
+                return a.length ? (a[a.length - 1].chosen_value ?? '') : '';
+            })(),
+            attentionCorrect: (() => {
+                const a = rows.filter(r => r.name === 'attention_intro' || r.name === 'attention_retry');
+                return a.length ? (a[a.length - 1].correct ?? '') : '';
+            })(),
+            attentionAttempts: rows.filter(r => r.name === 'attention_intro' || r.name === 'attention_retry').length,
             // Any question whose audio failed to start, e.g. "t3_okay_judgment".
             // Blank is the normal case; anything here means a child was asked a
             // question they never heard, and that trial should be treated with
@@ -364,7 +374,9 @@ function trial_narration_audio_path(t) {
         #lick4-narrator-container.intro-center {
             right: auto; bottom: auto; left: 50%; top: 50%;
             width: 420px; height: 376px;
-            margin-left: -210px; margin-top: -188px;
+            /* Sits above centre, not on it: these screens put a button below the
+               fox, and dead-centring her made her chin overlap it. */
+            margin-left: -210px; margin-top: -280px;
         }
         .fox-inner { position: relative; width: 100%; height: 100%; }
         .fox-inner .fox-plate { display: block; width: 100%; height: 100%; }
@@ -633,11 +645,11 @@ function render_trial_video(t, alt) {
 function text_choice_box(text) {
     return `<div style="font-size: 40px; padding: 26px 40px; min-width: 220px; min-height: 60px; border: 4px solid #2a6f97; border-radius: 16px; background: #eaf4fb; line-height: 1.2;">${text}</div>`;
 }
-function thumb_choice_box(kind /* "up" | "down" */) {
+function thumb_choice_box(kind /* "up" | "down" */, label) {
     const isUp = kind === "up";
     const bg   = isUp ? "linear-gradient(135deg,#1e8449,#27AE60)" : "linear-gradient(135deg,#922b21,#C0392B)";
     const src  = isUp ? "images/thumbsup.png" : "images/thumbsdown.png";
-    const lbl  = isUp ? "Okay" : "Not Okay";
+    const lbl  = label || (isUp ? "Okay" : "Not Okay");
     return `<div style="background:${bg};color:white;padding:18px 28px;min-width:170px;border-radius:22px;font-size:22px;font-weight:700;line-height:1.2;text-align:center;"><img src="${src}" width="72" height="72" style="display:block;margin:0 auto 6px;">${lbl}</div>`;
 }
 function face_choice_box(img_src, caption) {
@@ -1049,7 +1061,11 @@ const fox_intro = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `<audio autoplay class="fox-intro-audio"><source src="audio/fox_intro.mp3" type="audio/mpeg"></audio>
                <div id="fox-intro-spacer" style="height: 460px;"></div>`,
-    choices: next_button(),
+    // The fox asks whether this is something the child can help with, so the
+    // answer is a thumbs up rather than a bare "Next" — it gives the child
+    // something to agree to.
+    choices: [thumb_choice_box("up", "Great!<br>Let's get started")],
+    button_html: '<button class="jspsych-btn" style="background:transparent;border:none;padding:0;margin:0 10px;">%choice%</button>',
     data: { name: "fox_intro" },
     on_load: function() {
         // Reveal the fox (in local test we have no directions screen).
@@ -1207,6 +1223,89 @@ function cueLabel(label) {
     });
 }
 
+// Shared by the first attention check and its retries: the two labelled
+// buttons, in a random left/right order, with the spoken word shaking the
+// matching one.
+const MAX_ATTENTION_RETRIES = 2;
+
+function attention_choices() {
+    const swap = window._attn_intro_swap;
+    const mom = `<div style="font-size: 28px; padding: 22px 32px; border: 4px solid #2a6f97; border-radius: 14px; background: #eaf4fb; min-width: 160px;"><b>Mom</b></div>`;
+    const tch = `<div style="font-size: 28px; padding: 22px 32px; border: 4px solid #2a6f97; border-radius: 14px; background: #eaf4fb; min-width: 160px;"><b>Teacher</b></div>`;
+    return swap ? [tch, mom] : [mom, tch];
+}
+
+function attention_score(data) {
+    const vals = window._attn_intro_swap ? ["teacher", "mom"] : ["mom", "teacher"];
+    data.chosen_value   = vals[data.response];
+    data.attention_swap = window._attn_intro_swap;
+    data.correct        = (data.chosen_value === CB_RELATION.toLowerCase());
+    window._attn_last_correct = data.correct;
+    window._attn_attempts = (window._attn_attempts || 0) + 1;
+    data.attempt = window._attn_attempts;
+}
+
+// Play an audio file, in the document so the fox lip-syncs to it, and unlock
+// the buttons once it finishes.
+function play_and_unlock(src, cls) {
+    const a = document.createElement('audio');
+    a.src = src;
+    a.className = cls;
+    document.body.appendChild(a);
+    a.addEventListener('ended', () => a.remove());
+    a.play().catch(() => {});
+    return a;
+}
+
+// Retry after a wrong answer: re-state which adult it is ("in every video you
+// watch today, the person next to the girl is her mom"), then ask again. Uses
+// the reminder recording rather than replaying the whole intro video, so a
+// child who simply mis-clicked isn't made to sit through it again.
+const attention_retry = {
+    type: jsPsychHtmlButtonResponse,
+    on_start: function() { window._attn_intro_swap = Math.random() < 0.5; },
+    stimulus: `<div style="height: 300px;"></div>`,
+    choices: attention_choices,
+    button_html: '<button class="jspsych-btn" style="background:transparent;border:none;padding:0;margin:0 16px;">%choice%</button>',
+    margin_horizontal: "16px",
+    data: { name: "attention_retry" },
+    on_load: function() {
+        const btns = () => document.querySelectorAll('button.jspsych-btn');
+        btns().forEach(b => { b.disabled = true; b.style.visibility = "hidden"; });
+
+        const reminder = CB_RELATION === "Mom"
+            ? "audio/attention_intro_mom.mp3"
+            : "audio/attention_intro_teacher.mp3";
+        const a = play_and_unlock(reminder, 'attn-reminder-audio');
+
+        // After the reminder, ask the question again and cue the buttons.
+        a.addEventListener('ended', () => {
+            btns().forEach(b => { b.disabled = false; b.style.visibility = "visible"; });
+            const q = play_and_unlock("audio/q_attention_intro.mp3", 'attn-intro-audio');
+            const cues = WORD_CUES["audio/q_attention_intro.mp3"];
+            if (cues) scheduleCues(q, cues);
+            else q.addEventListener('ended', () => {
+                cueLabel("Mom"); setTimeout(() => cueLabel("Teacher"), 750);
+            });
+        });
+        // If the reminder can't play, don't strand them with hidden buttons.
+        setTimeout(() => btns().forEach(b => { b.disabled = false; b.style.visibility = "visible"; }), 9000);
+    },
+    on_finish: attention_score
+};
+
+// Repeats the reminder + question until they get it right, capped so a child
+// who keeps guessing isn't stuck. attentionCorrect in the data reflects the
+// final attempt; attentionAttempts records how many it took.
+const attention_retry_loop = {
+    timeline: [attention_retry],
+    conditional_function: function() { return window._attn_last_correct === false; },
+    loop_function: function() {
+        return window._attn_last_correct === false
+            && window._attn_attempts <= MAX_ATTENTION_RETRIES;
+    }
+};
+
 const attention_intro = {
     type: jsPsychHtmlButtonResponse,
     on_start: function() { window._attn_intro_swap = Math.random() < 0.5; },
@@ -1217,12 +1316,7 @@ const attention_intro = {
         return `<video src="${vid}" data-attn-intro-video autoplay playsinline
                        style="max-width: 600px; height: auto; margin: 12px auto; display: block; border-radius: 6px;">Your browser does not support inline video.</video>`;
     },
-    choices: function() {
-        const swap = window._attn_intro_swap;
-        const mom = `<div style="font-size: 28px; padding: 22px 32px; border: 4px solid #2a6f97; border-radius: 14px; background: #eaf4fb; min-width: 160px;"><b>Mom</b></div>`;
-        const tch = `<div style="font-size: 28px; padding: 22px 32px; border: 4px solid #2a6f97; border-radius: 14px; background: #eaf4fb; min-width: 160px;"><b>Teacher</b></div>`;
-        return swap ? [tch, mom] : [mom, tch];
-    },
+    choices: attention_choices,
     button_html: '<button class="jspsych-btn" style="background:transparent;border:none;padding:0;margin:0 16px;">%choice%</button>',
     margin_horizontal: "16px",
     data: { name: "attention_intro" },
@@ -1258,13 +1352,7 @@ const attention_intro = {
         if (video) { video.addEventListener('ended', unlock); video.play().catch(() => {}); }
         lock();
     },
-    on_finish: function(data) {
-        const swap = window._attn_intro_swap;
-        const vals = swap ? ["teacher", "mom"] : ["mom", "teacher"];
-        data.chosen_value   = vals[data.response];
-        data.attention_swap = swap;
-        data.correct        = (data.chosen_value === CB_RELATION.toLowerCase());
-    }
+    on_finish: attention_score
 };
 
 // Button training — fox shows the two trial buttons and explains them.
@@ -1527,6 +1615,7 @@ if (DEV.audit) {
         timeline.push(pie_intro);
         timeline.push(intro);
         timeline.push(attention_intro);
+        timeline.push(attention_retry_loop);
         timeline.push(button_training);
     }
     timeline.push(transition_to_trials);
