@@ -65,7 +65,7 @@ const video_consent = {
     institution: "Harvard University",
     PIContact: "athomas@g.harvard.edu",
     payment: "You will receive a $5 gift card for completing this study. You will be asked to provide your email for this purpose. Your email will remain strictly confidential and will only be used to issue payment.",
-    procedures: "The following is key information about the study: Someone will explain this asynchronous research study to you in the form of a video or summary. Your participation is completely voluntary; you and your child can choose not to take part. You and your child can agree to take part and later change your mind. However, because this is an asynchronous online study, we schedule 30–45-minute sessions to ensure there is ample time to make sure that your webcam is set up and working properly. The study session will be conducted remotely and recorded through Lookit, an online platform for developmental research studies. During the study, your child will be observed and recorded for data collection purposes only. During the study, your child will be presented with short videos, pictures, and recorded narration showing girls and their moms or teachers playing musical instruments. We will ask your child a series of questions about whether the characters' actions were okay, and record your child's verbal answers and clicks on the screen. You may be asked to complete several questionnaires that will help us better understand your child's development and behavior. They are optional, so you may fill out as much as you would like. The information you provide helps us to better understand social and moral development. We don't believe there are any risks for your child from participating in this research. You and your child are free to choose whether to be in this study. You can ask all the questions you want before you decide. If you do choose to participate, it's okay to stop at any point during the session. There has been no harm to children involved in this study, and there are no risks associated with their participation. We cannot promise any benefits to your child due to their participation in the study. However, we hope that your child will enjoy the study, and your child's participation may improve our understanding of certain phenomena in the field of Developmental Psychology, as this study attempts to provide deeper insight into how children think about consent and relationships. Participation in research is completely voluntary. Your child's alternative to participating in this research study is to not participate. Your child can decide to participate, not participate, or discontinue participation at any time without penalty or loss of benefits to which your child is otherwise entitled. You and your child's decision will not be held against you. You and your child's refusal to participate will not result in any consequences.",
+    procedures: "The following is key information about the study: Someone will explain this asynchronous research study to you in the form of a video or summary. Your participation is completely voluntary; you and your child can choose not to take part. You and your child can agree to take part and later change your mind. However, because this is an asynchronous online study, we schedule 30–45-minute sessions to ensure there is ample time to make sure that your webcam is set up and working properly. The study session will be conducted remotely and recorded through Lookit, an online platform for developmental research studies. During the study, your child will be observed and recorded for data collection purposes only. The study itself opens in a second browser tab; please keep this tab open, as recording happens here. During the study, your child will be presented with short videos, pictures, and recorded narration showing girls and their moms or teachers playing musical instruments. We will ask your child a series of questions about whether the characters' actions were okay, and record your child's verbal answers and clicks on the screen. You may be asked to complete several questionnaires that will help us better understand your child's development and behavior. They are optional, so you may fill out as much as you would like. The information you provide helps us to better understand social and moral development. We don't believe there are any risks for your child from participating in this research. You and your child are free to choose whether to be in this study.  If you do choose to participate, it's okay to stop at any point during the session. There has been no harm to children involved in this study, and there are no risks associated with their participation. We cannot promise any benefits to your child due to their participation in the study. However, we hope that your child will enjoy the study, and your child's participation may improve our understanding of certain phenomena in the field of Developmental Psychology, as this study attempts to provide deeper insight into how children think about consent and relationships. Participation in research is completely voluntary. Your child's alternative to participating in this research study is to not participate. Your child can decide to participate, not participate, or discontinue participation at any time without penalty or loss of benefits to which your child is otherwise entitled. You and your child's decision will not be held against you. You and your child's refusal to participate will not result in any consequences.",
     purpose: "Why is my child being invited to take part in a research study? We invite your child to take part in a research study because this study examines how typically developing children in their age range think about consent and social relationships. In particular, we are interested in how children evaluate actions involving someone else's belongings, especially when those actions occur with or without the other person's knowledge, and whether children's evaluations depend on the relationship between the people involved (e.g., a parent and child versus a teacher and student).",
     research_rights_statement: "You are not waiving any legal claims, rights, or remedies because of your participation in this research study. If you have questions, concerns, or complaints, or think the research has hurt your child, talk to the research team at 617-384-7777. You can also contact the PI, Ashley Thomas, athomas@g.harvard.edu. This research has been reviewed and approved by the Harvard University Area Institutional Review Board (\"IRB\"). You may talk to them at (617) 496-2847 or cuhs@harvard.edu if: <ul><li>Your questions, concerns, or complaints are not being answered by the research team.</li><li>You cannot reach the research team.</li><li>You want to talk to someone besides the research team.</li><li>You have questions about your child's rights as a research subject.</li><li>You want to get information or provide input about this research.</li></ul>"
 };
@@ -196,46 +196,52 @@ const game_complete = (function() {
 // === EXIT SURVEY + DEBRIEF =====================================
 const exit_survey = { type: chsSurvey.ExitSurveyPlugin };
 
+// Debrief text carried over verbatim from the all-in-CHS experiment.js so the
+// wording parents see doesn't change with the switch to the hosted game.
 const debrief = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: `
-        <div style="max-width: 780px; margin: 0 auto; line-height: 1.6; text-align: left;">
-            <h2 style="text-align:center;">Thank you — here's what we were studying</h2>
-            <p>This study looks at how children think about <strong>consent</strong>.
-               Your child saw girls whose instrument was used by another person — in
-               some stories the girl was <strong>there</strong> when it happened, and in
-               others she had <strong>left the room</strong>.</p>
-            <p>We also varied <strong>who</strong> used it — the girl's
-               <strong>mom</strong> or her <strong>teacher</strong> — and what the action
-               was: sharing saliva (playing her kazoo), simply touching her drumstick,
-               or a helpful act.</p>
-            <p>We're interested in whether children treat "she wasn't there to agree"
-               as making an action less okay, and whether that depends on the
-               relationship. Adults tend to think a parent needs less explicit
-               permission than a teacher does — we're asking when children start to
-               make that distinction.</p>
-            <p>There are no right or wrong answers. We look at patterns across many
-               children rather than any one child's responses.</p>
-            <p>You'll receive your <strong>$5 gift card</strong> within two weeks at the
-               email address you provided.</p>
-            <p>Thank you for helping with this research!</p>
-        </div>`,
-    choices: ["Finish"],
+    stimulus: `<p style="padding: 1em; margin: 0 auto 4% auto; max-width: 950px; border: medium solid #87b79f; border-radius: 5px; background-color: #effbf5; font-size: 26px; line-height: 1.3;">
+        Thanks to you and your child for participating in our study!
+        <br style="line-height:60px;">
+        <b>Description of study:</b> This study examines how children
+        ages 6 to 8 think about consent in social relationships. We
+        show children short stories about a girl and either her mom
+        or her teacher, where the side character interacts with the
+        girl's musical instrument in different ways &mdash; sometimes
+        with the girl's knowledge, and sometimes while the girl is
+        away. We ask children whether each action was &ldquo;okay&rdquo;,
+        and what the girl herself would think if she found out. We
+        randomize the order of trials and the assignment of
+        protagonists to conditions across children. We are interested
+        in whether children's evaluations of actions depend on whether
+        the action was consensual, what kind of action it was, and the
+        relationship between the people involved.
+        <br style="line-height:60px;">
+        <b>Payment:</b> we will send you a $5 Amazon gift code using the
+        email you provided. This can take up to two weeks, but if you
+        have not received one by then, please let us know.
+        <br style="line-height:60px;">
+        To submit this study, you can click the &ldquo;submit&rdquo; button.
+        </p>`,
+    choices: ['<p style="font-size: 40px;">Submit</p>'],
     data: { name: "debrief" }
 };
 
 // === TIMELINE ==================================================
+// Email is collected after the game rather than up front, matching the order
+// in experiment.js. Trade-off worth knowing: a family who abandons midway
+// leaves no address for the gift card.
 timeline.push(
     enter_fullscreen,
     video_config,
     video_consent,
-    email_trial,
     start_rec,
     instructions_page1,
     instructions_page2,
     open_game,
     game_complete,
     stop_rec,
+    email_trial,
     exit_survey,
     debrief
 );
