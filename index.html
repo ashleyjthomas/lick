@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>LICK-4 — standalone test</title>
+    <title>Knowledge, Consent, and Sharing</title>
 
     <!-- jsPsych 7.3.4 core + plugins, loaded from CDN -->
     <script src="https://unpkg.com/jspsych@7.3.4"></script>
@@ -14,15 +14,27 @@
 <body></body>
 <script>
 /* =============================================================
-   STANDALONE TEST VERSION of LICK-4.
-   For piloting outside of Children Helping Science. Identical to
-   experiment.js EXCEPT:
-     - CHS frames (video config / consent / recording / exit
-       survey) and the payment-email prompt are removed and
-       replaced with a plain welcome page;
-     - the final debrief is replaced with a short test message and
-       the raw trial data is shown on screen at the end.
-   Keep this file in sync with experiment.js as the study evolves.
+   LICK-4 — THE GAME (hosted on GitHub Pages)
+   =============================================================
+   This is what children actually play. It is opened in a second
+   tab by the CHS shell (chs_shell.js), which handles consent and
+   webcam recording and passes ?pid= and ?chsid= through:
+
+       https://ashleyjthomas.github.io/lick/?pid=...&chsid=...
+
+   Responses are posted to the "Lick Study 4" Google Sheet (see
+   scripts/apps_script.gs) — one row per child, re-posted after
+   every trial so a session that stops early still leaves data.
+   When the study ends it postMessages GAME_COMPLETE back to the
+   CHS tab so recording can stop.
+
+   It also runs standalone for piloting: open it with no ?pid= and
+   it invents a LOCAL_<timestamp> id. See RESEARCHER OPTIONS below
+   for the ?dev=1 / ?trial=N / ?rel= switches.
+
+   experiment.js is the older all-in-CHS version, which runs the
+   whole study inside CHS and does not use the Sheet. Use one or
+   the other, not both.
    ============================================================= */
 
 const jsPsych = initJsPsych({
@@ -75,7 +87,8 @@ const SHEETS = (function() {
                        'protagInference','protagCert','protagCertLabel',
                        'replays'];
 
-    const COLS = ['study','participantId','chsId','relationCondition',
+    const COLS = ['study','participantId','chsId','firstName','childAge',
+                  'relationCondition',
                   'startedAt','finishedAt','nTrialsCompleted',
                   'attentionAnswer','attentionCorrect',
                   'userAgent']
@@ -95,10 +108,16 @@ const SHEETS = (function() {
 
     function buildRow(final) {
         const rows = jsPsych.data.get().values();
+        // first_name / child_age are set on the welcome screen and stored as
+        // dataset-wide properties, so they ride on every row jsPsych records.
+        const props = jsPsych.data.get().values()[0] || {};
+        const setup = window._lick4Setup || {};
         const row = {
             study: 'lick_4_game',
             participantId: PID,
             chsId: CHS,
+            firstName: props.first_name || setup.first_name || '',
+            childAge:  props.child_age  || setup.child_age  || '',
             relationCondition: (typeof CB_RELATION !== 'undefined') ? CB_RELATION : '',
             startedAt: startedAt,
             finishedAt: final ? new Date().toISOString() : '',
@@ -858,14 +877,127 @@ const preload = {
     message: "Loading study..."
 };
 
+// Welcome / setup. Three jobs before the study can start: confirm sound is
+// working, collect the child's first name, and collect their age. "Start" stays
+// locked until all three are done, because a child who can't hear the narration
+// can't do the task at all.
+//
+// Deliberately does not name the two relationship labels anywhere on screen —
+// a parent reading aloud would prime the manipulation check.
+const AGE_OPTIONS = [6, 7, 8, 9];   // matches the CHS eligibility cutoffs
+
 const welcome = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<p style="font-size: 40px; margin: 22px auto; line-height: 1.25; max-width: 900px;">
-        <b>LICK-4 — standalone test.</b><br><br>
-        This is a local test version of the LICK-4 study. No webcam recording, no payment, no CHS frames.
-        <br><br>The raw trial data will be shown on screen at the end.
-        </p>`,
-    choices: next_button("Start")
+    stimulus: `
+        <div style="max-width: 720px; margin: 10px auto; text-align: left;">
+            <h1 style="text-align:center; font-size:40px; margin:0 0 6px;">Hello!</h1>
+            <p style="text-align:center; font-size:22px; color:#555; margin:0 0 26px;">
+                A grown-up can help with this part.
+            </p>
+
+            <div style="background:#f0f7fb; border:2px solid #4a90b8; padding:22px;
+                        border-radius:12px; margin-bottom:24px; text-align:center;">
+                <p style="font-size:22px; margin:0 0 8px;"><b>First, a sound check</b></p>
+                <p style="font-size:18px; color:#555; margin:0 0 18px;">
+                    Turn the sound on, then press the button to hear Ms. Fox.
+                </p>
+                <button id="lick4-sound-test" type="button"
+                        style="font-size:22px; padding:14px 30px; cursor:pointer;
+                               background:#2a6f97; color:white; border:none;
+                               border-radius:8px; font-weight:600;">
+                    🔊 Play test sound
+                </button>
+                <p id="lick4-sound-status" style="margin:18px 0 0; font-size:18px;
+                          color:#666; min-height:24px;">
+                    Press the button and listen for Ms. Fox's voice.
+                </p>
+            </div>
+
+            <div style="display:flex; gap:26px; flex-wrap:wrap; justify-content:center;">
+                <label style="font-size:22px;">
+                    What's your first name?<br>
+                    <input id="lick4-firstname" type="text" autocomplete="off"
+                           style="font-size:24px; padding:10px 14px; width:260px;
+                                  border:2px solid #9bb7c9; border-radius:8px; margin-top:8px;">
+                </label>
+                <label style="font-size:22px;">
+                    How old are you?<br>
+                    <select id="lick4-age"
+                            style="font-size:24px; padding:10px 14px; width:180px;
+                                   border:2px solid #9bb7c9; border-radius:8px; margin-top:8px;">
+                        <option value="">Pick one…</option>
+                        ${AGE_OPTIONS.map(a => `<option value="${a}">${a} years old</option>`).join('')}
+                    </select>
+                </label>
+            </div>
+        </div>`,
+    choices: next_button("Start!"),
+    data: { name: "welcome" },
+    on_load: function() {
+        // Show the fox here so the child can see who the test voice belongs to.
+        window._lick4FoxVisible = true;
+        const fc = document.getElementById('lick4-narrator-container');
+        if (fc) fc.classList.remove('hidden');
+
+        const startBtns = () => Array.from(document.querySelectorAll('button.jspsych-btn'));
+        const nameEl = document.getElementById('lick4-firstname');
+        const ageEl  = document.getElementById('lick4-age');
+        let soundOk  = false;
+        // Stash values as they're typed. on_finish runs AFTER jsPsych clears the
+        // display, so reading the inputs there returns nothing.
+        window._lick4Setup = { first_name: '', child_age: '' };
+
+        const refresh = () => {
+            window._lick4Setup.first_name = nameEl.value.trim();
+            window._lick4Setup.child_age  = ageEl.value;
+            const ready = soundOk && nameEl.value.trim() !== '' && ageEl.value !== '';
+            startBtns().forEach(b => {
+                b.disabled = !ready;
+                b.style.opacity = ready ? '1' : '0.4';
+            });
+        };
+        nameEl.addEventListener('input', refresh);
+        ageEl.addEventListener('change', refresh);
+        refresh();
+
+        // Play the first couple of seconds of the fox's intro as the test.
+        const btn    = document.getElementById('lick4-sound-test');
+        const status = document.getElementById('lick4-sound-status');
+        const SOUND_TEST_MS = 2000;
+        btn.onclick = () => {
+            // Element goes in the document so the fox lip-syncs to it — a
+            // detached `new Audio()` would leave her frozen.
+            const a = document.createElement('audio');
+            a.src = 'audio/fox_intro.mp3';
+            a.className = 'sound-test-audio';
+            document.body.appendChild(a);
+            btn.disabled = true; btn.style.opacity = '0.55';
+            status.textContent = '🔊 Playing…';
+            a.play().then(() => {
+                setTimeout(() => {
+                    a.pause(); a.remove();
+                    status.innerHTML = '✓ If you heard Ms. Fox, fill in the boxes below.';
+                    btn.disabled = false; btn.style.opacity = '1';
+                    btn.textContent = '🔊 Play again';
+                    soundOk = true;
+                    refresh();
+                }, SOUND_TEST_MS);
+            }).catch(() => {
+                a.remove();
+                status.innerHTML = "⚠️ Couldn't play. Check the sound settings and try again.";
+                btn.disabled = false; btn.style.opacity = '1';
+            });
+        };
+    },
+    on_finish: function(data) {
+        const s = window._lick4Setup || { first_name: '', child_age: '' };
+        data.first_name = s.first_name;
+        data.child_age  = s.child_age;
+        jsPsych.data.addProperties({
+            first_name: s.first_name,
+            child_age:  s.child_age
+        });
+    }
 };
 
 // Fox intro — fox sits centered, plays the intro audio, then slides
@@ -1285,11 +1417,57 @@ const thanks = {
     type: jsPsychHtmlButtonResponse,
     stimulus: audio_html(AUDIO.thanks)
         + `<p style="font-size: 44px; margin: 40px auto; line-height: 1.3;">Thank you for playing!</p>`,
-    choices: next_button("Show data"),
+    choices: next_button("All done!"),
+    data: { name: "thanks" },
     on_load: function() {
         if (typeof window.lick4_pie_feast === "function") {
             setTimeout(window.lick4_pie_feast, 600);
         }
+    }
+};
+
+// Final screen. Saves the completed row and tells the CHS tab we're done
+// BEFORE offering any way to leave — the tab can be closed from here, and a
+// close that beat the upload would lose the whole session.
+const return_to_chs = {
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+        <div style="max-width: 640px; margin: 40px auto; text-align: center;">
+            <p style="font-size: 40px; margin: 0 0 18px;">🦊 All done — thank you!</p>
+            <p style="font-size: 26px; line-height: 1.4; color: #444;">
+                Grown-ups: please go back to the <b>Children Helping Science</b> tab
+                to finish up.
+            </p>
+            <p id="lick4-return-note" style="font-size: 20px; color: #777; margin-top: 22px;">
+                That tab should have moved on by itself already.
+            </p>
+        </div>`,
+    choices: ["Take me back to the study"],
+    data: { name: "return_to_chs" },
+    on_load: function() {
+        // 1. Save first. 2. Then hand off to CHS. Order matters.
+        try { SHEETS.post({ final: true }); } catch (e) { console.warn(e); }
+        try { SHEETS.notifyOpener(); }        catch (e) { console.warn(e); }
+
+        // If we weren't opened by CHS (direct pilot run) there's nothing to go
+        // back to, so don't offer a button that does nothing.
+        const opened = !!(window.opener && window.opener !== window);
+        if (!opened) {
+            document.querySelectorAll('button.jspsych-btn')
+                    .forEach(b => { b.style.display = 'none'; });
+            const note = document.getElementById('lick4-return-note');
+            if (note) note.textContent = 'You can close this tab.';
+        }
+    },
+    on_finish: function() {
+        // Focus the CHS tab, then close this one. Both are permitted here
+        // because this tab was opened by script from that tab.
+        try {
+            if (window.opener && !window.opener.closed) {
+                window.opener.focus();
+                setTimeout(() => window.close(), 150);
+            }
+        } catch (e) { console.warn('could not return to the CHS tab:', e); }
     }
 };
 
@@ -1320,6 +1498,7 @@ if (DEV.audit) {
         }
     }
     timeline.push(thanks);
+    timeline.push(return_to_chs);
 }
 
 mountDevPanel();

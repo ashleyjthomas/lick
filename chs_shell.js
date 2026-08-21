@@ -9,12 +9,12 @@
      -------                          --------
      fullscreen
      video config + consent
-     payment email
      start recording   ------>
      parent instructions
      opens game  ------------------>  index.html?pid=...&chsid=...
      waits for GAME_COMPLETE <-----   postMessage on finish
      stop recording
+     payment email
      exit survey
      debrief
 
@@ -26,11 +26,13 @@
    inside CHS with no Google Sheet. Use one or the other, not both.
 
    IMPORTANT — consent text: the procedures/purpose/rights strings
-   below are copied verbatim from experiment.js so the approved
-   wording is not altered by accident. They still say recording and
-   data go through Lookit, which is no longer true once trial data
-   lands in a Google Sheet. Update them to match the IRB amendment
-   before collecting data.
+   below match the wording deployed on CHS, which is authoritative.
+   One sentence was added to procedures, because it is now true and
+   affects recording: the study opens in a second tab and this one
+   must stay open. The strings still say recording and data go
+   through Lookit, which stops being true once trial data lands in a
+   Google Sheet — update them to match the IRB amendment before
+   collecting data.
    ============================================================= */
 
 const jsPsych = initJsPsych();
@@ -94,10 +96,12 @@ const instructions_page1 = {
     stimulus: `
         <div style="max-width: 620px; margin: 0 auto; line-height: 1.6; text-align: left;">
             <h2 style="text-align:center;">Important Instructions</h2>
+            <!-- Deliberately does not name the two relationship labels. A parent
+                 reading this aloud would prime the child before the manipulation
+                 check, which asks them to identify who the adult is. -->
             <p>In a moment you'll open a game for your child to play. Your child will
-               watch short videos of girls playing musical instruments with their
-               <strong>mom</strong> or their <strong>teacher</strong>, and will answer
-               a few simple questions after each video.</p>
+               watch short videos of girls playing musical instruments with a
+               grown-up, and will answer a few simple questions after each video.</p>
             <p>We want to know what your child genuinely thinks, so please
                <strong>stay neutral</strong> while they answer, and try to minimise
                distractions.</p>
@@ -160,12 +164,22 @@ const game_complete = (function() {
     let messageHandler = null;
     return {
         type: jsPsychHtmlButtonResponse,
+        // This is the WAITING screen — the child is still in the other tab. It
+        // must not read as "finished", or a parent who glances back mid-game
+        // thinks they're done. When the game really finishes it posts
+        // GAME_COMPLETE and this trial ends itself, so nobody should sit here
+        // reading it afterwards.
         stimulus: `
             <div style="text-align:center; max-width: 560px; margin: 0 auto;">
-                <h2>🦊 Thanks for playing!</h2>
-                <p>Please <strong>return to this tab</strong> if you haven't already.</p>
-                <p style="margin-top:18px;">This page advances automatically when the
-                   game finishes. You can also click <strong>Continue</strong>.</p>
+                <h2>The game is open in another tab</h2>
+                <p style="font-size:19px; line-height:1.55;">
+                    Your child is playing there now. <strong>Please leave this tab
+                    open</strong> — the recording is happening here.
+                </p>
+                <p style="font-size:19px; line-height:1.55; margin-top:16px;">
+                    When the game finishes, this page moves on by itself. If it
+                    doesn't, click <strong>Continue</strong>.
+                </p>
             </div>`,
         choices: ["Continue"],
         on_load: function() {
