@@ -91,6 +91,7 @@ const SHEETS = (function() {
                   'relationCondition',
                   'startedAt','finishedAt','nTrialsCompleted',
                   'attentionAnswer','attentionCorrect',
+                  'audioFailures',
                   'userAgent']
         .concat(...Array.from({ length: NTRIALS }, (_, i) =>
             PER_TRIAL.map(f => `t${i + 1}_${f}`)));
@@ -123,6 +124,14 @@ const SHEETS = (function() {
             finishedAt: final ? new Date().toISOString() : '',
             attentionAnswer:  pick(rows, 'attention_intro', undefined),
             attentionCorrect: pick(rows, 'attention_intro', undefined, 'correct'),
+            // Any question whose audio failed to start, e.g. "t3_okay_judgment".
+            // Blank is the normal case; anything here means a child was asked a
+            // question they never heard, and that trial should be treated with
+            // suspicion.
+            audioFailures: rows
+                .filter(r => r.audio_played === false)
+                .map(r => `t${(r.run_index ?? 0) + 1}_${r.name}`)
+                .join(' '),
             userAgent: navigator.userAgent
         };
         let done = 0;
@@ -635,6 +644,32 @@ function two_option_trial({ stimulus_html, audio_key, audio_src, options, name, 
             const src = audio_src || (audio_key ? AUDIO[audio_key] : null);
             const audio = src ? audio_html(src) : "";
             return audio + stimulus_html;
+        },
+        // `<audio autoplay>` is fire-and-forget: if the browser refuses to start
+        // it, or the file is still loading, the child hears nothing, nobody is
+        // told, and the trial looks fine in the data. Drive playback explicitly
+        // instead, retry once, and record whether it actually played.
+        on_load: function() {
+            const a = document.querySelector('audio.narrator-audio');
+            const trial = jsPsych.getCurrentTrial();
+            if (!a) { if (trial) trial.data.audio_played = null; return; }
+            let attempts = 0;
+            const attempt = () => {
+                attempts++;
+                a.play().then(() => {
+                    if (trial) { trial.data.audio_played = true; trial.data.audio_attempts = attempts; }
+                }).catch(err => {
+                    if (attempts < 2) { setTimeout(attempt, 350); return; }
+                    if (trial) {
+                        trial.data.audio_played = false;
+                        trial.data.audio_attempts = attempts;
+                        trial.data.audio_error = String(err && err.name || err);
+                    }
+                    console.warn('[LICK-4] question audio did not play:', a.currentSrc, err);
+                });
+            };
+            if (a.readyState >= 2) attempt();
+            else { a.addEventListener('canplay', attempt, { once: true }); setTimeout(attempt, 1200); }
         },
         choices: function() {
             const ordered = swap ? [options[1], options[0]] : [options[0], options[1]];
