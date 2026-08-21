@@ -234,7 +234,7 @@ for (const condition of CONDITIONS) {
 //   ?trial=N           start at trial N (1-indexed; e.g. ?trial=4 skips the first 3)
 //   ?audit=1           launch the asset audit screen instead of the study
 //   ?dev=1             show floating dev panel + enable keyboard shortcuts
-// Keyboard shortcuts when ?dev=1 (or always — they're harmless to kids):
+// Keyboard shortcuts, ?dev=1 ONLY (and never while typing in a field):
 //   Shift+S            skip the current trial (finishTrial with {skipped:true})
 //   Shift+E            end the whole study (jump to debrief)
 // =================================================================
@@ -258,10 +258,18 @@ const CB_RELATION = (function() {
 })();
 console.log("[LICK-4] CB_RELATION =", CB_RELATION, "DEV =", DEV);
 
-// Researcher keyboard shortcuts — always live, can't be triggered accidentally
-// by kids (require Shift + letter).
+// Researcher keyboard shortcuts: Shift+S skips a trial, Shift+E ends the study.
+//
+// These are gated behind ?dev=1 and ignored while a form field has focus. Both
+// guards matter now that the welcome screen asks the child to type their first
+// name: a child called Ella or Emmett types Shift+E and, without this, the whole
+// session ends mid-typing. Shift+S is the same hazard for Sam or Sofia.
 document.addEventListener('keydown', function(e) {
+    if (!DEV.dev) return;
     if (!e.shiftKey) return;
+    const el = e.target;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ||
+               el.tagName === 'SELECT' || el.isContentEditable)) return;
     if (e.key === 'S' || e.key === 's') {
         try { jsPsych.finishTrial({ skipped: true, skip_method: 'shift_s' }); } catch (_) {}
     } else if (e.key === 'E' || e.key === 'e') {
