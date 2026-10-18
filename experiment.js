@@ -205,16 +205,23 @@ function trial_narration_audio_path(t) {
         blink:      'fox_blink.png'        // eyes shut (mouth is closed in it)
     };
 
-    // The timelines still speak in visemes, so collapse those onto the four
-    // mouth openings the artwork actually has. Quiet consonants alternate
-    // between the two shut poses so a run of them isn't a frozen face.
-    const VISEME_FRAME = {
-        Neutral: 'closed', M: 'closed', Smile: 'closed_alt',
-        D: 'closed_alt', S: 'closed_alt',
-        F: 'smile', L: 'smile', R: 'smile', Uh: 'smile', Ee: 'smile',
-        Oh: 'round', WOo: 'round',
-        Ah: 'wide', Surprised: 'wide'
-    };
+    // The six frames are really THREE drawings rendered twice each: the head
+    // only matches within a pair (measured on the ears/forehead band, ~3%
+    // within a pair vs 13-29% across). Swapping freely between all six makes
+    // her head and ears jump every frame, which reads as jitter rather than
+    // speech. So each pair is used as a unit:
+    //
+    //   talking : closed <-> wide        (one head, shut vs wide open)
+    //   resting : smile  <-> blink       (one head, open smile vs eyes shut)
+    //
+    // That leaves one pose change when she starts or stops speaking, which
+    // reads as her turning to talk, instead of a shimmer throughout.
+    // closed_alt / round are the third pair, unused for now.
+    const OPEN_VISEMES = new Set(['Ah','Oh','WOo','Ee','Uh','R','L','F','Surprised']);
+    function frame_for(shape, speaking, blinking) {
+        if (!speaking) return blinking ? 'blink' : 'smile';
+        return OPEN_VISEMES.has(shape) ? 'wide' : 'closed';
+    }
 
     Object.values(FRAMES).forEach(f => { const i = new Image(); i.src = ART + f; });
 
@@ -545,7 +552,7 @@ function trial_narration_audio_path(t) {
         function tick(now) {
             const { shape, speaking } = currentMouth();
             blinkTick(now, speaking);
-            const frame = blinking ? 'blink' : (VISEME_FRAME[shape] || 'closed');
+            const frame = frame_for(shape, speaking, blinking);
             // Look the container up fresh each frame — jsPsych can wipe and
             // remount it, so state lives on the element itself.
             const box = document.getElementById('lick4-narrator-container');
