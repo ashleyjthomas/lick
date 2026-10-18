@@ -193,18 +193,32 @@ function trial_narration_audio_path(t) {
     const ART = BASE_URL + "images/narrator/";
     // Mouth position inside the 470x420 face plate, as percentages so the
     // whole thing scales with the container.
-    const MOUTH_BOX = { left: 37.87, top: 76.67, width: 18.51, height: 11.90 };
-    const VISEMES = ['Neutral','Ah','D','Ee','F','L','M','Oh','R','S','Uh',
-                     'WOo','Smile','Surprised'];
-    const PLATES  = { open: 'base.png', half: 'base_blink1.png', shut: 'base_blink2.png' };
+    // Whole-character frames, cut from the sprite sheet and chroma-keyed. The
+    // old fox was a face plate with a mouth PNG layered on it; these are full
+    // poses, so animation is a straight frame swap instead.
+    const FRAMES = {
+        closed:     'fox_closed.png',      // mouth shut, slight smile
+        closed_alt: 'fox_closed_alt.png',  // second shut pose, for variation
+        smile:      'fox_smile.png',       // open smile
+        round:      'fox_round.png',       // small round "oh"
+        wide:       'fox_wide.png',        // wide open
+        blink:      'fox_blink.png'        // eyes shut (mouth is closed in it)
+    };
 
-    // Preload every plate and mouth shape so swaps never flash.
-    Object.values(PLATES).forEach(f => { const i = new Image(); i.src = ART + f; });
-    VISEMES.forEach(v => { const i = new Image(); i.src = ART + `mouth_${v}.png`; });
+    // The timelines still speak in visemes, so collapse those onto the four
+    // mouth openings the artwork actually has. Quiet consonants alternate
+    // between the two shut poses so a run of them isn't a frozen face.
+    const VISEME_FRAME = {
+        Neutral: 'closed', M: 'closed', Smile: 'closed_alt',
+        D: 'closed_alt', S: 'closed_alt',
+        F: 'smile', L: 'smile', R: 'smile', Uh: 'smile', Ee: 'smile',
+        Oh: 'round', WOo: 'round',
+        Ah: 'wide', Surprised: 'wide'
+    };
 
-    const FOX_HTML = `
-        <img class="fox-plate" src="${ART}${PLATES.open}" alt="">
-        <img class="fox-mouth-img" src="${ART}mouth_Neutral.png" alt="">`;
+    Object.values(FRAMES).forEach(f => { const i = new Image(); i.src = ART + f; });
+
+    const FOX_HTML = `<img class="fox-frame" src="${ART}${FRAMES.closed}" alt="">`;
 
     const css = `
         /* Fox: persistent layer. Default position is right side, up near
@@ -216,8 +230,8 @@ function trial_narration_audio_path(t) {
             top: 110px;
             bottom: auto;
             left: auto;
-            width: 200px;
-            height: 179px;   /* 470x420 art aspect */
+            width: 155px;
+            height: 209px;   /* full standing figure, portrait */
             z-index: 9;
             pointer-events: none;
             filter: drop-shadow(0 8px 18px rgba(0,0,0,0.20));
@@ -235,23 +249,14 @@ function trial_narration_audio_path(t) {
             bottom: auto;
             left: 50%;
             top:  50%;
-            width:  420px;
-            height: 376px;
-            margin-left: -210px;
-            margin-top:  -188px;
+            width:  266px;
+            height: 358px;
+            margin-left: -133px;
+            margin-top:  -300px;
         }
         .fox-inner { position: relative; width: 100%; height: 100%; }
-        .fox-inner .fox-plate {
-            display: block; width: 100%; height: 100%;
-        }
-        /* Mouth shape overlays the plate. Each mouth PNG already contains the
-           surrounding muzzle, so it covers the plate's blank mouth area. */
-        .fox-inner .fox-mouth-img {
-            position: absolute;
-            left:   ${MOUTH_BOX.left}%;
-            top:    ${MOUTH_BOX.top}%;
-            width:  ${MOUTH_BOX.width}%;
-            height: ${MOUTH_BOX.height}%;
+        .fox-inner .fox-frame {
+            display: block; width: 100%; height: 100%; object-fit: contain;
         }
         #lick4-narrator-container.speaking .fox-inner {
             animation: fox-bob 1.4s ease-in-out infinite;
@@ -350,7 +355,7 @@ function trial_narration_audio_path(t) {
             75%      { transform: scale(1.35) rotate(-4deg); }
         }
         @media (max-width: 900px) {
-            #lick4-narrator-container { width: 140px; height: 125px; right: 12px; top: 80px; }
+            #lick4-narrator-container { width: 105px; height: 141px; right: 12px; top: 80px; }
             #lick4-pie { width: 90px; height: 90px; left: 12px; bottom: 12px; }
         }
     `;
@@ -524,41 +529,37 @@ function trial_narration_audio_path(t) {
                      speaking: true };
         }
 
-        // Blink every 2.5–6s: half-shut, shut, half-shut, open.
-        let plate = 'open', nextBlink = performance.now() + 2500, blinkAt = [];
-        function blinkTick(now) {
-            if (blinkAt.length && now >= blinkAt[0].t) {
-                plate = blinkAt.shift().p;
-            } else if (!blinkAt.length && now > nextBlink) {
-                plate = 'half';
-                blinkAt = [{ t: now +  50, p: 'shut' },
-                           { t: now + 130, p: 'half' },
-                           { t: now + 180, p: 'open' }];
-                nextBlink = now + 2500 + Math.random() * 3500;
+        // Blink every 2.5-6s, held ~140ms. Only while she's quiet: the blink
+        // pose has a closed mouth, so blinking mid-word would snap her mouth
+        // shut. There's no combined open-mouth-blinking frame to use.
+        let blinking = false, blinkUntil = 0, nextBlink = performance.now() + 2500;
+        function blinkTick(now, speaking) {
+            if (blinking) {
+                if (now >= blinkUntil) { blinking = false; nextBlink = now + 2500 + Math.random() * 3500; }
+            } else if (!speaking && now > nextBlink) {
+                blinking = true;
+                blinkUntil = now + 140;
             }
         }
 
         function tick(now) {
-            blinkTick(now);
             const { shape, speaking } = currentMouth();
+            blinkTick(now, speaking);
+            const frame = blinking ? 'blink' : (VISEME_FRAME[shape] || 'closed');
             // Look the container up fresh each frame — jsPsych can wipe and
-            // remount it, which would leave a captured reference stale. State
-            // lives on the elements (data-*) for the same reason.
+            // remount it, so state lives on the element itself.
             const box = document.getElementById('lick4-narrator-container');
             if (box) {
-                const mouthEl = box.querySelector('.fox-mouth-img');
-                const plateEl = box.querySelector('.fox-plate');
-                if (mouthEl && mouthEl.dataset.shape !== shape) {
-                    mouthEl.src = ART + `mouth_${shape}.png`;
-                    mouthEl.dataset.shape = shape;
-                }
-                if (plateEl && plateEl.dataset.plate !== plate) {
-                    plateEl.src = ART + PLATES[plate];
-                    plateEl.dataset.plate = plate;
+                const img = box.querySelector('.fox-frame');
+                if (img && img.dataset.frame !== frame) {
+                    img.src = ART + FRAMES[frame];
+                    img.dataset.frame = frame;
                 }
                 box.classList.toggle('speaking', speaking);
             }
             requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
 
