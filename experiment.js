@@ -196,31 +196,31 @@ function trial_narration_audio_path(t) {
     // Whole-character frames, cut from the sprite sheet and chroma-keyed. The
     // old fox was a face plate with a mouth PNG layered on it; these are full
     // poses, so animation is a straight frame swap instead.
+    // Six frames: three mouth openings, each with an eyes-open and an
+    // eyes-shut version. All six are the SAME drawing with only the face
+    // altered — measured at 0.0-0.2% difference across the ears and forehead —
+    // so any frame can follow any other without the figure shifting.
     const FRAMES = {
-        closed:     'fox_closed.png',      // mouth shut, slight smile
-        closed_alt: 'fox_closed_alt.png',  // second shut pose, for variation
-        smile:      'fox_smile.png',       // open smile
-        round:      'fox_round.png',       // small round "oh"
-        wide:       'fox_wide.png',        // wide open
-        blink:      'fox_blink.png'        // eyes shut (mouth is closed in it)
+        closed:       'fox_closed.png',        // mouth shut, slight smile
+        mid:          'fox_mid.png',           // slightly open
+        open:         'fox_open.png',          // wide open, tongue showing
+        closed_blink: 'fox_closed_blink.png',
+        mid_blink:    'fox_mid_blink.png',
+        open_blink:   'fox_open_blink.png'
     };
 
-    // The six frames are really THREE drawings rendered twice each: the head
-    // only matches within a pair (measured on the ears/forehead band, ~3%
-    // within a pair vs 13-29% across). Swapping freely between all six makes
-    // her head and ears jump every frame, which reads as jitter rather than
-    // speech. So each pair is used as a unit:
-    //
-    //   talking : closed <-> wide        (one head, shut vs wide open)
-    //   resting : smile  <-> blink       (one head, open smile vs eyes shut)
-    //
-    // That leaves one pose change when she starts or stops speaking, which
-    // reads as her turning to talk, instead of a shimmer throughout.
-    // closed_alt / round are the third pair, unused for now.
-    const OPEN_VISEMES = new Set(['Ah','Oh','WOo','Ee','Uh','R','L','F','Surprised']);
+    // Visemes collapse onto the three mouth openings the art has. Blinking is
+    // a separate axis now: because every frame is the same drawing, she can
+    // blink on any mouth shape, including mid-word.
+    const WIDE_VISEMES = new Set(['Ah','Oh','WOo','Surprised']);
+    const MID_VISEMES  = new Set(['Ee','Uh','R','L','F']);
     function frame_for(shape, speaking, blinking) {
-        if (!speaking) return blinking ? 'blink' : 'smile';
-        return OPEN_VISEMES.has(shape) ? 'wide' : 'closed';
+        let mouth = 'closed';
+        if (speaking) {
+            if (WIDE_VISEMES.has(shape))     mouth = 'open';
+            else if (MID_VISEMES.has(shape)) mouth = 'mid';
+        }
+        return blinking ? mouth + '_blink' : mouth;
     }
 
     Object.values(FRAMES).forEach(f => { const i = new Image(); i.src = ART + f; });
@@ -238,7 +238,7 @@ function trial_narration_audio_path(t) {
             bottom: auto;
             left: auto;
             width: 155px;
-            height: 209px;   /* full standing figure, portrait */
+            height: 235px;   /* full standing figure, portrait */
             z-index: 9;
             pointer-events: none;
             filter: drop-shadow(0 8px 18px rgba(0,0,0,0.20));
@@ -257,7 +257,7 @@ function trial_narration_audio_path(t) {
             left: 50%;
             top:  50%;
             width:  266px;
-            height: 358px;
+            height: 402px;
             margin-left: -133px;
             margin-top:  -300px;
         }
@@ -362,7 +362,7 @@ function trial_narration_audio_path(t) {
             75%      { transform: scale(1.35) rotate(-4deg); }
         }
         @media (max-width: 900px) {
-            #lick4-narrator-container { width: 105px; height: 141px; right: 12px; top: 80px; }
+            #lick4-narrator-container { width: 105px; height: 159px; right: 12px; top: 80px; }
             #lick4-pie { width: 90px; height: 90px; left: 12px; bottom: 12px; }
         }
     `;
@@ -536,14 +536,13 @@ function trial_narration_audio_path(t) {
                      speaking: true };
         }
 
-        // Blink every 2.5-6s, held ~140ms. Only while she's quiet: the blink
-        // pose has a closed mouth, so blinking mid-word would snap her mouth
-        // shut. There's no combined open-mouth-blinking frame to use.
+        // Blink every 2.5-6s, held ~140ms, whether or not she is talking —
+        // every mouth shape has an eyes-shut twin.
         let blinking = false, blinkUntil = 0, nextBlink = performance.now() + 2500;
-        function blinkTick(now, speaking) {
+        function blinkTick(now) {
             if (blinking) {
                 if (now >= blinkUntil) { blinking = false; nextBlink = now + 2500 + Math.random() * 3500; }
-            } else if (!speaking && now > nextBlink) {
+            } else if (now > nextBlink) {
                 blinking = true;
                 blinkUntil = now + 140;
             }
@@ -551,7 +550,7 @@ function trial_narration_audio_path(t) {
 
         function tick(now) {
             const { shape, speaking } = currentMouth();
-            blinkTick(now, speaking);
+            blinkTick(now);
             const frame = frame_for(shape, speaking, blinking);
             // Look the container up fresh each frame — jsPsych can wipe and
             // remount it, so state lives on the element itself.
