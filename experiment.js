@@ -1632,7 +1632,7 @@ const debrief = {
         relationship between the people involved.
         <br style="line-height:60px;">
         <b>Payment:</b> we will send you a $5 Amazon gift code using the
-        email you provided. This can take up to two weeks, but if you
+        email you provided. This can take up to three weeks, but if you
         have not received one by then, please let us know.
         <br style="line-height:60px;">
         To submit this study, you can click the &ldquo;submit&rdquo; button.
