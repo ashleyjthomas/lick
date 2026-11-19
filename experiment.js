@@ -722,6 +722,9 @@ function okay_certainty_trial(extra_data, prior_name = "okay_judgment",
         },
         margin_horizontal: "16px",
         data: Object.assign({ name: trial_name, prior_name: prior_name }, extra_data),
+        on_load: function() {
+            hold_until_spoken(document.querySelector('audio.narrator-audio'));
+        },
         on_finish: function(data) {
             const isYes = window._last_okay_isYes;
             const cert = data.response === 0 ? "DEFINITELY" : "MAYBE";
@@ -779,6 +782,39 @@ function text_choice_box(text) {
 // window._opt_swap, which was shared across memory_check /
 // okay_judgment / protagonist_inference and produced occasional
 // chosen_value flips when timing lined up unluckily.)
+// Hold the answer buttons back until the question has finished playing. A
+// child who can click early answers a question they have not heard yet, and
+// the data looks identical to a real answer. Everything is released on a
+// timeout as well, so a clip that fails to play can't strand them.
+function hold_until_spoken(audioEl, maxWaitMs) {
+    const btns = () => Array.from(document.querySelectorAll('button.jspsych-btn'));
+    const lock = () => btns().forEach(b => {
+        b.disabled = true;
+        b.style.opacity = '0.35';
+        b.style.pointerEvents = 'none';
+    });
+    const release = () => btns().forEach(b => {
+        b.disabled = false;
+        b.style.opacity = '1';
+        b.style.pointerEvents = '';
+    });
+    lock();
+    let done = false;
+    const once = () => { if (!done) { done = true; release(); } };
+    if (audioEl) {
+        audioEl.addEventListener('ended', once);
+        audioEl.addEventListener('error', once);
+    }
+    // Fallback: the clip's own length once known, otherwise a flat ceiling.
+    setTimeout(once, maxWaitMs || 9000);
+    if (audioEl) {
+        audioEl.addEventListener('loadedmetadata', () => {
+            if (isFinite(audioEl.duration)) setTimeout(once, audioEl.duration * 1000 + 600);
+        }, { once: true });
+    }
+    return release;
+}
+
 function two_option_trial({ stimulus_html, audio_key, audio_src, options,
                             name, extra_data = {}, no_swap = false }) {
     let swap;
@@ -791,6 +827,31 @@ function two_option_trial({ stimulus_html, audio_key, audio_src, options,
             const src = audio_src || (audio_key ? AUDIO[audio_key] : null);
             const audio = src ? audio_html(src) : "";
             return audio + stimulus_html;
+        },
+        // Drive the audio explicitly rather than relying on `autoplay`, record
+        // whether it actually played, and hold the buttons until it finishes.
+        on_load: function() {
+            const a = document.querySelector('audio.narrator-audio');
+            const trial = jsPsych.getCurrentTrial();
+            if (!a) { if (trial) trial.data.audio_played = null; return; }
+            let attempts = 0;
+            const attempt = () => {
+                attempts++;
+                a.play().then(() => {
+                    if (trial) { trial.data.audio_played = true; trial.data.audio_attempts = attempts; }
+                }).catch(err => {
+                    if (attempts < 2) { setTimeout(attempt, 350); return; }
+                    if (trial) {
+                        trial.data.audio_played = false;
+                        trial.data.audio_attempts = attempts;
+                        trial.data.audio_error = String(err && err.name || err);
+                    }
+                    console.warn('[LICK-4] question audio did not play:', a.currentSrc, err);
+                });
+            };
+            if (a.readyState >= 2) attempt();
+            else { a.addEventListener('canplay', attempt, { once: true }); setTimeout(attempt, 1200); }
+            hold_until_spoken(a);
         },
         choices: function() {
             const ordered = swap ? [options[1], options[0]] : [options[0], options[1]];
