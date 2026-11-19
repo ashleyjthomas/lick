@@ -342,76 +342,49 @@ function trial_narration_audio_path(t) {
 }
 
 // === HELPERS ===================================================
-// Persistent cute-fox narrator avatar in the bottom-right corner.
-// Mouth animates ("talks") whenever any <audio> on the page is playing;
-// idle (still) otherwise. Inline SVG so CSS can target the mouth element.
+// Ms. Fox is recorded video now — the experimenter performing the script
+// through Zoom's fox avatar, with Zoom's flat grey virtual background keyed
+// out to transparency (charanim/cut_fox_video.py). The drawn fox and her
+// lip-sync machinery are gone: a real performance carries the mouth, the
+// eyes and the timing on its own.
+//
+// She is on screen ONLY for the six lines she speaks herself — the intro,
+// the pie explanation, the button training, and the three pie-slice
+// celebrations. Through the trials and the questions there is no fox at all;
+// the recorded voice plays on its own, as it did in the lab.
 (function setupNarrator() {
     if (document.getElementById('lick4-narrator-container')) return;
-    // Fox narrator artwork, sliced out of the rigged Character Animator puppet
-    // (POW Studios) into flat PNGs — see charanim/ for the source PSD and the
-    // export script. Three face plates (eyes open / mid-blink / shut) plus one
-    // PNG per mouth shape, layered on top of the plate.
-    const ART = "images/narrator/";
+    const VID = "videos/narrator/";
 
-    // Whole-character frames, cut from the sprite sheet and chroma-keyed. The
-    // old fox was a face plate with a mouth PNG layered on it; these are full
-    // poses, so animation is a straight frame swap instead.
-    // Six frames: three mouth openings, each with an eyes-open and an
-    // eyes-shut version. All six are the SAME drawing with only the face
-    // altered — measured at 0.0-0.2% difference across the ears and forehead —
-    // so any frame can follow any other without the figure shifting.
-    const FRAMES = {
-        closed:       'fox_closed.png',        // mouth shut, slight smile
-        mid:          'fox_mid.png',           // slightly open
-        open:         'fox_open.png',          // wide open, tongue showing
-        closed_blink: 'fox_closed_blink.png',
-        mid_blink:    'fox_mid_blink.png',
-        open_blink:   'fox_open_blink.png'
-    };
-
-    // Visemes collapse onto the three mouth openings the art has. Blinking is
-    // a separate axis now: because every frame is the same drawing, she can
-    // blink on any mouth shape, including mid-word.
-    const WIDE_VISEMES = new Set(['Ah','Oh','WOo','Surprised']);
-    const MID_VISEMES  = new Set(['Ee','Uh','R','L','F']);
-    function frame_for(shape, speaking, blinking) {
-        let mouth = 'closed';
-        if (speaking) {
-            if (WIDE_VISEMES.has(shape))     mouth = 'open';
-            else if (MID_VISEMES.has(shape)) mouth = 'mid';
-        }
-        return blinking ? mouth + '_blink' : mouth;
-    }
-
-    Object.values(FRAMES).forEach(f => { const i = new Image(); i.src = ART + f; });
-
-    const FOX_HTML = `<img class="fox-frame" src="${ART}${FRAMES.closed}" alt="">`;
+    // VP9-in-WebM is the only format that carries an alpha channel across
+    // Chrome, Firefox and Edge — the browsers CHS supports for webcam
+    // recording, and so the ones this game opens in.
+    const FOX_HTML = `<video class="fox-video" playsinline preload="auto"></video>`;
     const css = `
-        /* Portrait now — the fox is a full standing figure, not a head. */
-        #lick4-narrator-container { position: fixed; right: 28px; top: 110px;
-            bottom: auto; left: auto;
-            width: 155px; height: 235px; z-index: 9; pointer-events: none;
-            filter: drop-shadow(0 8px 18px rgba(0,0,0,0.20));
-            transition: width 0.9s ease-in-out, height 0.9s ease-in-out,
-                        right 0.9s ease-in-out, bottom 0.9s ease-in-out,
-                        top   0.9s ease-in-out, left   0.9s ease-in-out,
-                        margin-left 0.9s ease-in-out, margin-top 0.9s ease-in-out; }
-        #lick4-narrator-container.hidden { display: none !important; }
-        #lick4-narrator-container.intro-center {
-            right: auto; bottom: auto; left: 50%; top: 50%;
-            width: 266px; height: 402px;
-            /* Sits above centre, not on it: these screens put a button below the
-               fox, and dead-centring her made her overlap it. */
-            margin-left: -133px; margin-top: -300px;
+        /* One position only. She appears for her own lines and then goes, so
+           there is no corner idle state to slide back to. 300x391 keeps the
+           aspect of the keyed source (498x650); she sits above centre because
+           every screen she speaks on puts a button underneath her. */
+        #lick4-narrator-container { position: fixed; left: 50%; top: 50%;
+            width: 300px; height: 391px;
+            margin-left: -150px; margin-top: -300px;
+            z-index: 9; pointer-events: none; display: none;
+            filter: drop-shadow(0 8px 18px rgba(0,0,0,0.18)); }
+        #lick4-narrator-container.showing { display: block; animation: fox-in 0.4s ease-out; }
+        /* Button training needs the middle of the screen for the two demo
+           buttons she is pointing at, so she stands to one side for it. */
+        #lick4-narrator-container.aside {
+            left: auto; right: 3vw; top: 50%;
+            width: 238px; height: 310px;
+            margin-left: 0; margin-top: -120px;
+        }
+        @keyframes fox-in {
+            from { opacity: 0; transform: translateY(14px) scale(0.96); }
+            to   { opacity: 1; transform: none; }
         }
         .fox-inner { position: relative; width: 100%; height: 100%; }
-        .fox-inner .fox-frame {
+        .fox-inner .fox-video {
             display: block; width: 100%; height: 100%; object-fit: contain;
-        }
-        #lick4-narrator-container.speaking .fox-inner { animation: fox-bob 1.4s ease-in-out infinite; }
-        @keyframes fox-bob {
-            0%,100% { transform: translateY(0)    rotate(-0.6deg); }
-            50%     { transform: translateY(-3px) rotate( 0.6deg); }
         }
         /* Empty tin that fills with one crusted slice per completed trial.
            Bottom-LEFT: the fox now occupies the right side. */
@@ -467,7 +440,8 @@ function trial_narration_audio_path(t) {
             75%     { transform: scale(1.35) rotate(-4deg); }
         }
         @media (max-width: 900px) {
-            #lick4-narrator-container { width: 105px; height: 159px; right: 12px; top: 80px; }
+            #lick4-narrator-container { width: 210px; height: 274px;
+                margin-left: -105px; margin-top: -210px; }
             #lick4-pie { width: 90px; height: 90px; left: 12px; bottom: 12px; }
         }
     `;
@@ -524,8 +498,7 @@ function trial_narration_audio_path(t) {
         if (!c) {
             c = document.createElement('div');
             c.id = 'lick4-narrator-container';
-            // Start hidden — revealed on the directions/audio-check screen.
-            if (!window._lick4FoxVisible) c.className = 'hidden';
+            // Hidden until a clip is played; see lick4_fox_play.
             c.innerHTML = `<div class="fox-inner">${FOX_HTML}</div>`;
         }
         if (c.parentNode !== document.documentElement) document.documentElement.appendChild(c);
@@ -551,13 +524,65 @@ function trial_narration_audio_path(t) {
         // call time: the pie sits bottom-left and the fox top-right, and
         // either can shift with the viewport.
         const fox = document.getElementById('lick4-narrator-container');
-        if (fox) {
-            const a = p.getBoundingClientRect(), b = fox.getBoundingClientRect();
-            const dx = (b.left + b.width/2) - (a.left + a.width/2);
-            const dy = (b.top + b.height*0.62) - (a.top + a.height/2);
-            p.style.transform = `translate(${dx.toFixed(0)}px, ${dy.toFixed(0)}px) scale(0.55)`;
-        }
+        const a = p.getBoundingClientRect();
+        const b = (fox && fox.classList.contains('showing'))
+            ? fox.getBoundingClientRect()
+            // She may not be on screen — fly it to centre instead of to the
+            // 0x0 rect a display:none element reports.
+            : { left: innerWidth / 2 - 150, top: innerHeight / 2 - 195, width: 300, height: 391 };
+        const dx = (b.left + b.width / 2) - (a.left + a.width / 2);
+        const dy = (b.top + b.height * 0.62) - (a.top + a.height / 2);
+        p.style.transform = `translate(${dx.toFixed(0)}px, ${dy.toFixed(0)}px) scale(0.55)`;
         p.classList.add('feasting');
+    };
+
+    // Play one of Ms. Fox's recorded lines. She fades in, speaks, and stays
+    // on screen until the trial that asked for her is over — vanishing the
+    // moment she stops talking reads as a glitch. Returns the <video> so the
+    // caller can hold the buttons until she has finished.
+    window.lick4_fox_play = function(clip, position) {
+        const c = ensureMounted();
+        const v = c.querySelector('video.fox-video');
+        if (!v) return null;
+        try { v.pause(); } catch (e) {}
+        v.src = VID + clip + '.webm';
+        v.load();
+        c.classList.toggle('aside', position === 'aside');
+        c.classList.add('showing');
+
+        // Video with sound needs the page to have been interacted with. Every
+        // screen she speaks on is reached by a click, so this normally
+        // succeeds — but retry once and record the failure the same way the
+        // question audio does, rather than letting a silent clip look fine in
+        // the data.
+        const trial = () => (typeof jsPsych !== 'undefined' && jsPsych.getCurrentTrial)
+            ? jsPsych.getCurrentTrial() : null;
+        let attempts = 0;
+        const attempt = () => {
+            attempts++;
+            v.play().then(() => {
+                const t = trial();
+                if (t) { t.data.audio_played = true; t.data.audio_attempts = attempts; }
+            }).catch(err => {
+                if (attempts < 2) { setTimeout(attempt, 350); return; }
+                const t = trial();
+                if (t) {
+                    t.data.audio_played = false;
+                    t.data.audio_attempts = attempts;
+                    t.data.audio_error = String((err && err.name) || err);
+                }
+                console.warn('[LICK-4] fox clip did not play:', clip, err);
+            });
+        };
+        attempt();
+        return v;
+    };
+    window.lick4_fox_hide = function() {
+        const c = document.getElementById('lick4-narrator-container');
+        if (!c) return;
+        c.classList.remove('showing');
+        const v = c.querySelector('video.fox-video');
+        if (v) { try { v.pause(); } catch (e) {} }
     };
     const inject = () => {
         if (!document.getElementById('lick4-narrator-css')) {
@@ -566,75 +591,6 @@ function trial_narration_audio_path(t) {
             (document.head || document.documentElement).appendChild(s);
         }
         ensureMounted();
-
-        // Pre-computed mouth-shape timelines, one per narration asset (every
-        // audio clip and every trial video), built offline from each file's
-        // loudness envelope — see charanim/ for the generator. Each track is a
-        // string with one hex character per frame indexing into VISEMES. Keys
-        // are repo-relative paths, matched with endsWith().
-        let LIPSYNC = null;
-        fetch(ART + "lipsync.json")
-            .then(r => r.json())
-            .then(j => { LIPSYNC = j; })
-            .catch(() => { LIPSYNC = null; });   // falls back to a generic flap
-
-        function trackFor(m) {
-            if (!LIPSYNC) return null;
-            const url = m.currentSrc || m.src || "";
-            for (const k in LIPSYNC.tracks) if (url.endsWith(k)) return LIPSYNC.tracks[k];
-            return null;
-        }
-
-        const FLAP = ['Ah','Ee','Neutral','Oh','Uh','Neutral'];
-
-        function currentMouth() {
-            let playing = null;
-            document.querySelectorAll('audio, video').forEach(m => {
-                if (!playing && !m.paused && !m.ended && m.readyState >= 2) playing = m;
-            });
-            if (!playing) return { shape: 'Neutral', speaking: false };
-            const tl = trackFor(playing);
-            if (tl) {
-                const i = Math.floor(playing.currentTime * 1000 / LIPSYNC.frame_ms);
-                if (i >= 0 && i < tl.length) {
-                    return { shape: LIPSYNC.visemes[parseInt(tl[i], 16)], speaking: true };
-                }
-                return { shape: 'Neutral', speaking: true };
-            }
-            return { shape: FLAP[Math.floor(playing.currentTime * 8) % FLAP.length],
-                     speaking: true };
-        }
-
-        // Blink every 2.5-6s, held ~140ms, whether or not she is talking —
-        // every mouth shape has an eyes-shut twin.
-        let blinking = false, blinkUntil = 0, nextBlink = performance.now() + 2500;
-        function blinkTick(now) {
-            if (blinking) {
-                if (now >= blinkUntil) { blinking = false; nextBlink = now + 2500 + Math.random() * 3500; }
-            } else if (now > nextBlink) {
-                blinking = true;
-                blinkUntil = now + 140;
-            }
-        }
-
-        function tick(now) {
-            const { shape, speaking } = currentMouth();
-            blinkTick(now);
-            const frame = frame_for(shape, speaking, blinking);
-            // Re-query each frame: jsPsych can wipe and remount the container,
-            // so state lives on the element rather than in captured vars.
-            const box = document.getElementById('lick4-narrator-container');
-            if (box) {
-                const img = box.querySelector('.fox-frame');
-                if (img && img.dataset.frame !== frame) {
-                    img.src = ART + FRAMES[frame];
-                    img.dataset.frame = frame;
-                }
-                box.classList.toggle('speaking', speaking);
-            }
-            requestAnimationFrame(tick);
-        }
-        requestAnimationFrame(tick);
 
         new MutationObserver(() => ensureMounted())
             .observe(document.documentElement, { childList: true, subtree: true });
@@ -940,30 +896,22 @@ function build_test_trial(t) {
     // and the pie fills in one wedge with a wiggle.
     sub.push({
         type: jsPsychHtmlButtonResponse,
-        stimulus: function() {
-            const done = window._lick4PieDone || 0;
-            let src;
-            if (done === 0)         src = AUDIO.pie_slice_first;
-            else if (done % 2 === 1) src = AUDIO.pie_slice_more_yum;
-            else                     src = AUDIO.pie_slice_more;
-            return `<audio autoplay class="pie-slice-audio"><source src="${src}" type="audio/mpeg"></audio>
-                    <div style="height: 360px;"></div>`;
-        },
+        stimulus: `<div style="height: 360px;"></div>`,
         choices: next_button("Next"),
         data: { name: "pie_slice_feedback", run_index: t.run_index, cell_index: t.cell_index },
         on_load: function() {
+            // Slices already in the tin, read before this one is added.
+            const done = window._lick4PieDone || 0;
             if (typeof window.lick4_pie_advance === "function") window.lick4_pie_advance();
             const p = document.getElementById('lick4-pie');
             if (p) { p.classList.add('celebrating'); setTimeout(() => p.classList.remove('celebrating'), 1900); }
-            const audio = document.querySelector('audio.pie-slice-audio');
-            const btns = () => document.querySelectorAll('button.jspsych-btn');
-            btns().forEach(b => { b.disabled = true; b.style.opacity = '0.4'; });
-            const enableNext = () => btns().forEach(b => { b.disabled = false; b.style.opacity = '1'; });
-            if (audio) {
-                audio.addEventListener('ended', enableNext);
-                setTimeout(() => { if (audio.ended) enableNext(); }, 8000);
-            } else { enableNext(); }
-        }
+            let clip;
+            if (done === 0)          clip = "fox_pie_slice_first";
+            else if (done % 2 === 1) clip = "fox_pie_slice_more_yum";
+            else                     clip = "fox_pie_slice_more";
+            hold_until_spoken(window.lick4_fox_play(clip), 10000);
+        },
+        on_finish: function() { window.lick4_fox_hide(); }
     });
 
     return sub;
@@ -975,12 +923,20 @@ const preload = {
     // Relation is between-subjects, so only the assigned relation's intro
     // video and intro narration are ever played — fetching both wastes a
     // download before the study can start.
-    audio: ["audio/fox_intro.mp3", "audio/fox_pie_intro.mp3",
-            "audio/fox_button_training.mp3", "audio/q_attention_intro.mp3",
+    audio: ["audio/q_attention_intro.mp3",
             CB_RELATION === "Mom" ? "audio/intro_mom.mp3" : "audio/intro_teacher.mp3"],
     video: [CB_RELATION === "Mom" ? "videos/girls_mom_intro.m4v"
                                   : "videos/girls_teacher_intro.m4v",
-            ...TRIALS.map(trial_video_path)],
+            ...TRIALS.map(trial_video_path),
+            // Ms. Fox's own lines. The sound check on the very first screen
+            // plays one of these, so they have to be here rather than
+            // streamed on demand.
+            "videos/narrator/fox_intro.webm",
+            "videos/narrator/fox_pie_intro.webm",
+            "videos/narrator/fox_button_training.webm",
+            "videos/narrator/fox_pie_slice_first.webm",
+            "videos/narrator/fox_pie_slice_more.webm",
+            "videos/narrator/fox_pie_slice_more_yum.webm"],
     auto_preload: false,
     continue_after_error: true,
     show_detailed_errors: false,
@@ -1044,11 +1000,6 @@ const welcome = {
     choices: next_button("Start!"),
     data: { name: "welcome" },
     on_load: function() {
-        // Show the fox here so the child can see who the test voice belongs to.
-        window._lick4FoxVisible = true;
-        const fc = document.getElementById('lick4-narrator-container');
-        if (fc) fc.classList.remove('hidden');
-
         const startBtns = () => Array.from(document.querySelectorAll('button.jspsych-btn'));
         const nameEl = document.getElementById('lick4-firstname');
         const ageEl  = document.getElementById('lick4-age');
@@ -1070,36 +1021,32 @@ const welcome = {
         ageEl.addEventListener('change', refresh);
         refresh();
 
-        // Play the first couple of seconds of the fox's intro as the test.
+        // Play the first few seconds of the fox's intro as the test — the
+        // video, not just the audio, so the sound check doubles as the
+        // child's first sight of her.
         const btn    = document.getElementById('lick4-sound-test');
         const status = document.getElementById('lick4-sound-status');
-        const SOUND_TEST_MS = 2000;
+        const SOUND_TEST_MS = 3000;
         btn.onclick = () => {
-            // Element goes in the document so the fox lip-syncs to it — a
-            // detached `new Audio()` would leave her frozen.
-            const a = document.createElement('audio');
-            a.src = 'audio/fox_intro.mp3';
-            a.className = 'sound-test-audio';
-            document.body.appendChild(a);
+            const v = window.lick4_fox_play('fox_intro', 'aside');
+            if (!v) {
+                status.innerHTML = "⚠️ Couldn't play. Check the sound settings and try again.";
+                return;
+            }
             btn.disabled = true; btn.style.opacity = '0.55';
             status.textContent = '🔊 Playing…';
-            a.play().then(() => {
-                setTimeout(() => {
-                    a.pause(); a.remove();
-                    status.innerHTML = '✓ If you heard Ms. Fox, fill in the boxes below.';
-                    btn.disabled = false; btn.style.opacity = '1';
-                    btn.textContent = '🔊 Play again';
-                    soundOk = true;
-                    refresh();
-                }, SOUND_TEST_MS);
-            }).catch(() => {
-                a.remove();
-                status.innerHTML = "⚠️ Couldn't play. Check the sound settings and try again.";
+            setTimeout(() => {
+                window.lick4_fox_hide();
+                status.innerHTML = '✓ If you heard Ms. Fox, fill in the boxes below.';
                 btn.disabled = false; btn.style.opacity = '1';
-            });
+                btn.textContent = '🔊 Play again';
+                soundOk = true;
+                refresh();
+            }, SOUND_TEST_MS);
         };
     },
     on_finish: function(data) {
+        window.lick4_fox_hide();
         const s = window._lick4Setup || { first_name: '', child_age: '' };
         data.first_name = s.first_name;
         data.child_age  = s.child_age;
@@ -1114,8 +1061,7 @@ const welcome = {
 // back to the corner. No on-screen narration; audio is the only voice.
 const fox_intro = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<audio autoplay class="fox-intro-audio"><source src="audio/fox_intro.mp3" type="audio/mpeg"></audio>
-               <div id="fox-intro-spacer" style="height: 460px;"></div>`,
+    stimulus: `<div id="fox-intro-spacer" style="height: 460px;"></div>`,
     // The fox asks whether this is something the child can help with, so the
     // answer is a thumbs up rather than a bare "Next" — it gives the child
     // something to agree to.
@@ -1123,36 +1069,18 @@ const fox_intro = {
     button_html: '<button class="jspsych-btn" style="background:transparent;border:none;padding:0;margin:0 10px;">%choice%</button>',
     data: { name: "fox_intro" },
     on_load: function() {
-        // Reveal the fox (in local test we have no directions screen).
-        window._lick4FoxVisible = true;
-        const c = document.getElementById('lick4-narrator-container');
-        if (c) { c.classList.remove('hidden'); c.classList.add('intro-center'); }
-        const audio = document.querySelector('audio.fox-intro-audio');
-        const btns = () => document.querySelectorAll('button.jspsych-btn');
-        btns().forEach(b => { b.disabled = true; b.style.opacity = '0.4'; });
-        // Keep .intro-center across both fox_intro and welcome `intro` —
-        // only enable the Next button when audio ends.
-        const enableNext = () => btns().forEach(b => { b.disabled = false; b.style.opacity = '1'; });
-        if (audio) {
-            audio.addEventListener('ended', enableNext);
-            setTimeout(() => { if (audio.ended) enableNext(); }, 20000);
-        } else { enableNext(); }
+        hold_until_spoken(window.lick4_fox_play("fox_intro"), 20000);
     },
-    on_finish: function() {
-        // Intentionally do NOT remove .intro-center — welcome screen wants it.
-    }
+    on_finish: function() { window.lick4_fox_hide(); }
 };
 
 // Pie intro — fox explains the pie reward; pie pulses in corner.
 const pie_intro = {
     type: jsPsychHtmlButtonResponse,
-    stimulus: `<audio autoplay class="fox-pie-intro-audio"><source src="audio/fox_pie_intro.mp3" type="audio/mpeg"></audio>
-               <div style="height: 460px;"></div>`,
+    stimulus: `<div style="height: 460px;"></div>`,
     choices: next_button(),
     data: { name: "pie_intro" },
     on_load: function() {
-        const c = document.getElementById('lick4-narrator-container');
-        if (c) c.classList.add('intro-center');
         const p = document.getElementById('lick4-pie');
         if (p) {
             // Snap into next-to-fox position with no slide animation.
@@ -1162,23 +1090,17 @@ const pie_intro = {
             void p.offsetHeight;
             p.style.transition = saved;
         }
-        const audio = document.querySelector('audio.fox-pie-intro-audio');
-        const btns = () => document.querySelectorAll('button.jspsych-btn');
-        btns().forEach(b => { b.disabled = true; b.style.opacity = '0.4'; });
-        const enableNext = () => btns().forEach(b => { b.disabled = false; b.style.opacity = '1'; });
-        if (audio) {
-            audio.addEventListener('ended', enableNext);
-            setTimeout(() => { if (audio.ended) enableNext(); }, 15000);
-        } else { enableNext(); }
+        hold_until_spoken(window.lick4_fox_play("fox_pie_intro"), 20000);
     },
     on_finish: function() {
+        window.lick4_fox_hide();
         // Pie slides back to corner; .visible stays so it remains on screen.
         const p = document.getElementById('lick4-pie');
         if (p) p.classList.remove('spotlight');
     }
 };
 
-// Welcome screen: fox stays centered+big, no "Welcome" banner.
+// Welcome screen: narration only, no fox — this line is not one of hers.
 const intro = {
     type: jsPsychHtmlButtonResponse,
     stimulus: function() {
@@ -1189,20 +1111,7 @@ const intro = {
     choices: next_button(),
     data: { name: "intro" },
     on_load: function() {
-        const c = document.getElementById('lick4-narrator-container');
-        if (c) c.classList.add('intro-center');
-        const audio = document.querySelector('audio.welcome-audio');
-        const btns = () => document.querySelectorAll('button.jspsych-btn');
-        btns().forEach(b => { b.disabled = true; b.style.opacity = '0.4'; });
-        const finish = () => btns().forEach(b => { b.disabled = false; b.style.opacity = '1'; });
-        if (audio) {
-            audio.addEventListener('ended', finish);
-            setTimeout(() => { if (audio.ended) finish(); }, 30000);
-        } else { finish(); }
-    },
-    on_finish: function() {
-        const c = document.getElementById('lick4-narrator-container');
-        if (c) c.classList.remove('intro-center');
+        hold_until_spoken(document.querySelector('audio.welcome-audio'), 30000);
     }
 };
 
@@ -1414,7 +1323,6 @@ const attention_intro = {
 const button_training = {
     type: jsPsychHtmlButtonResponse,
     stimulus: `
-        <audio autoplay class="button-training-audio"><source src="audio/fox_button_training.mp3" type="audio/mpeg"></audio>
         <div style="margin-top: 30px; display: flex; justify-content: center; gap: 60px;">
             <div style="background:linear-gradient(135deg,#ff9436,#ed6b00);color:white;padding:14px 30px;border-radius:16px;font-weight:700;font-size:26px;display:inline-flex;align-items:center;gap:10px;line-height:1;box-shadow:0 4px 10px rgba(237,107,0,0.30);"><span style="font-size:34px;line-height:0.8;">↻</span> Watch again</div>
             <div style="background:linear-gradient(135deg,#34d058,#1e8449);color:white;padding:14px 30px;border-radius:16px;font-weight:700;font-size:26px;display:inline-flex;align-items:center;gap:10px;line-height:1;box-shadow:0 4px 10px rgba(39,174,96,0.30);">Next <span style="font-size:28px;line-height:0.8;">▶</span></div>
@@ -1423,16 +1331,11 @@ const button_training = {
     choices: next_button("Got it"),
     data: { name: "button_training" },
     on_load: function() {
-        // Fox stays on the side so she doesn't cover the demo buttons.
-        const audio = document.querySelector('audio.button-training-audio');
-        const btns = () => document.querySelectorAll('button.jspsych-btn');
-        btns().forEach(b => { b.disabled = true; b.style.opacity = '0.4'; });
-        const enableNext = () => btns().forEach(b => { b.disabled = false; b.style.opacity = '1'; });
-        if (audio) {
-            audio.addEventListener('ended', enableNext);
-            setTimeout(() => { if (audio.ended) enableNext(); }, 25000);
-        } else { enableNext(); }
-    }
+        // She stands to the side here so she doesn't cover the demo buttons
+        // she is describing.
+        hold_until_spoken(window.lick4_fox_play("fox_button_training", "aside"), 22000);
+    },
+    on_finish: function() { window.lick4_fox_hide(); }
 };
 
 const transition_to_trials = {
@@ -1471,6 +1374,9 @@ function buildAuditAssetList() {
     const videos = [
         "videos/girls_mom_intro.m4v", "videos/girls_teacher_intro.m4v",
         ...TRIALS.map(trial_video_path),
+        ...["fox_intro", "fox_pie_intro", "fox_button_training",
+            "fox_pie_slice_first", "fox_pie_slice_more", "fox_pie_slice_more_yum"]
+            .map(n => `videos/narrator/${n}.webm`),
     ];
     const images = [
         "images/thumbsup.png", "images/thumbsdown.png",
