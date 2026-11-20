@@ -372,11 +372,17 @@ function trial_narration_audio_path(t) {
             filter: drop-shadow(0 8px 18px rgba(0,0,0,0.18)); }
         #lick4-narrator-container.showing { display: block; animation: fox-in 0.4s ease-out; }
         /* Button training needs the middle of the screen for the two demo
-           buttons she is pointing at, so she stands to one side for it. */
+           buttons she is pointing at, so she stands out of the way for it.
+           Anchored to the bottom-right CORNER rather than the vertical
+           middle: centred vertically she sat in the same band as the demo
+           row, which left nine pixels of clearance at 1024px wide and
+           overlapped outright below ~1004px. The row runs across the top of
+           the screen and the pie sits bottom-left, so this corner is the one
+           piece of the screen nothing else claims, at any window size. */
         #lick4-narrator-container.aside {
-            left: auto; right: 3vw; top: 50%;
-            width: 238px; height: 310px;
-            margin-left: 0; margin-top: -120px;
+            left: auto; right: 2vw; top: auto; bottom: 2vh;
+            width: 200px; height: 261px;
+            margin-left: 0; margin-top: 0;
         }
         @keyframes fox-in {
             from { opacity: 0; transform: translateY(14px) scale(0.96); }
