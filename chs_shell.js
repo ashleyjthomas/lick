@@ -126,7 +126,7 @@ const instructions_page2 = {
                explain anything yourself.</p>
             <p><strong>Please keep this tab open.</strong> Recording is happening
                here, so closing it will stop the recording.</p>
-            <p>The game takes about <strong>15 minutes</strong>. When it finishes,
+            <p>The game takes about <strong>20 minutes</strong>. When it finishes,
                this page advances automatically — or you can click
                <strong>Continue</strong> yourself.</p>
             <p>Press <strong>Next</strong> to open the game.</p>
@@ -218,7 +218,7 @@ const debrief = {
         Thanks to you and your child for participating in our study!
         <br style="line-height:60px;">
         <b>Description of study:</b> This study examines how children
-        ages 6 to 8 think about consent in social relationships. We
+        ages 6 to 9 think about consent in social relationships. We
         show children short stories about a girl and either her mom
         or her teacher, where the side character interacts with the
         girl's musical instrument in different ways &mdash; sometimes
