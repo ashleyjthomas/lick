@@ -608,6 +608,31 @@ function trial_narration_audio_path(t) {
     else document.addEventListener('DOMContentLoaded', inject);
 })();
 
+// === PLAYBACK SPEED ============================================
+// Everything recorded — Ms. Fox, the question audio, the trial videos — plays
+// at this rate. 1.0 is the pace it was recorded at. Browsers preserve pitch
+// when you change playbackRate, so a faster rate sounds brisk rather than
+// chipmunked.
+//
+// Applied with one capturing listener on 'play' rather than at each call site,
+// so clips added later are covered automatically. Set via ?speed=1 to hear the
+// original pace without editing anything.
+const PLAYBACK_RATE = (function() {
+    const v = parseFloat(new URLSearchParams(window.location.search).get('speed'));
+    return (isFinite(v) && v >= 0.5 && v <= 2) ? v : 1.2;
+})();
+
+document.addEventListener('play', function(e) {
+    const m = e.target;
+    if (!m || (m.tagName !== 'AUDIO' && m.tagName !== 'VIDEO')) return;
+    try {
+        // Chrome/Firefox/Edge all honour one of these; setting both is harmless.
+        m.preservesPitch = true;
+        m.mozPreservesPitch = true;
+        m.playbackRate = PLAYBACK_RATE;
+    } catch (err) { /* a browser that refuses just plays at 1.0 */ }
+}, true);
+
 function audio_html(src) {
     return `<audio autoplay class="narrator-audio"><source src="${src}" type="audio/mpeg"></audio>`;
 }
@@ -665,7 +690,12 @@ function hold_until_spoken(audioEl, maxWaitMs) {
     setTimeout(once, maxWaitMs || 9000);
     if (audioEl) {
         audioEl.addEventListener('loadedmetadata', () => {
-            if (isFinite(audioEl.duration)) setTimeout(once, audioEl.duration * 1000 + 600);
+            // duration is media time; at a faster playbackRate the clip
+            // finishes proportionally sooner in wall-clock time.
+            if (isFinite(audioEl.duration)) {
+                const rate = audioEl.playbackRate || 1;
+                setTimeout(once, (audioEl.duration / rate) * 1000 + 600);
+            }
         }, { once: true });
     }
     return release;
@@ -780,9 +810,13 @@ function okay_certainty_trial(extra_data, prior_name = "okay_judgment",
         },
         margin_horizontal: "16px",
         data: Object.assign({ name: trial_name, prior_name: prior_name }, extra_data),
-        on_load: function() {
-            hold_until_spoken(document.querySelector('audio.narrator-audio'));
-        },
+        // Deliberately NOT held until the audio finishes, unlike every other
+        // question. This is a follow-up to an answer the child has just given:
+        // the screen already shows what they said, the two buttons restate it
+        // at two strengths, and the audio only asks how strongly they meant it.
+        // Nothing here is new information they could answer wrongly by
+        // answering early, and locking it made them sit through the same
+        // sentence nine times.
         on_finish: function(data) {
             const isYes = window._last_okay_isYes;
             const cert = data.response === 0 ? "DEFINITELY" : "MAYBE";
