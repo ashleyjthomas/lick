@@ -1067,8 +1067,10 @@ const welcome = {
         // time. This one is played to its end, so nothing is clipped.
         const btn    = document.getElementById('lick4-sound-test');
         const status = document.getElementById('lick4-sound-status');
+        // She stays on screen after the greeting rather than vanishing the
+        // moment she stops talking, which looked like a glitch. The welcome
+        // trial's on_finish takes her away when the grown-up presses Start.
         const done = () => {
-            window.lick4_fox_hide();
             status.innerHTML = '✓ If you heard Ms. Fox, fill in the boxes below.';
             btn.disabled = false; btn.style.opacity = '1';
             btn.textContent = '🔊 Play again';

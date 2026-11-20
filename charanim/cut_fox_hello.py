@@ -5,7 +5,7 @@ import numpy as np
 
 SRC = "/Users/ashleythomas/Dropbox (Personal)/Mac (2)/Downloads/GMT20261119-200807_Recording_avo_1280x720.mp4"
 OUT = sys.argv[1]
-START, END = 3.70, 5.86          # pause after "Fox." runs 5.757-5.894
+START, END = 3.70, 6.30          # silence after "Fox." runs 6.15-6.39
 W, H = 1280, 720
 CX0, CX1, CY0, CY1 = 440, 938, 70, 720
 CW, CH = CX1 - CX0, CY1 - CY0
