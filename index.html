@@ -970,10 +970,11 @@ function build_test_trial(t) {
 const preload = {
     type: jsPsychPreload,
     // Relation is between-subjects, so only the assigned relation's intro
-    // video and intro narration are ever played — fetching both wastes a
-    // download before the study can start.
+    // video is ever played — fetching both wastes a download before the
+    // study can start.
     audio: ["audio/q_attention_intro.mp3",
-            CB_RELATION === "Mom" ? "audio/intro_mom.mp3" : "audio/intro_teacher.mp3"],
+            CB_RELATION === "Mom" ? "audio/attention_intro_mom.mp3"
+                                  : "audio/attention_intro_teacher.mp3"],
     video: [CB_RELATION === "Mom" ? "videos/girls_mom_intro.m4v"
                                   : "videos/girls_teacher_intro.m4v",
             ...TRIALS.map(trial_video_path),
@@ -1149,20 +1150,13 @@ const pie_intro = {
     }
 };
 
-// Welcome screen: narration only, no fox — this line is not one of hers.
-const intro = {
-    type: jsPsychHtmlButtonResponse,
-    stimulus: function() {
-        const a = CB_RELATION === "Mom" ? "audio/intro_mom.mp3" : "audio/intro_teacher.mp3";
-        return `<audio autoplay class="welcome-audio"><source src="${a}" type="audio/mpeg"></audio>
-                <div style="height: 460px;"></div>`;
-    },
-    choices: next_button(),
-    data: { name: "intro" },
-    on_load: function() {
-        hold_until_spoken(document.querySelector('audio.welcome-audio'), 30000);
-    }
-};
+// The `intro` screen used to sit here: a blank panel playing intro_mom.mp3 /
+// intro_teacher.mp3 — "In this study, you'll watch some short videos of girls
+// with their moms. After each video, I'll ask you a few questions." Removed.
+// Ms. Fox has already said the same thing in her own intro, and the screen
+// immediately below establishes the relationship far better than a sentence
+// does: it SHOWS the girls with the adult, then checks the child noticed.
+// The audio files are still in audio/ if it needs to come back.
 
 // Start-of-study attention check: plays the intro video establishing
 // the assigned relationship. Single Next button (locked until video
@@ -1400,7 +1394,7 @@ const transition_to_trials = {
 // HEAD-fetches each to verify it's actually there. Launch with ?audit=1.
 function buildAuditAssetList() {
     const audios = [
-        "audio/intro_mom.mp3", "audio/intro_teacher.mp3",
+        "audio/attention_intro_mom.mp3", "audio/attention_intro_teacher.mp3",
         "audio/fox_intro.mp3", "audio/fox_pie_intro.mp3",
         "audio/fox_button_training.mp3",
         "audio/q_attention_intro.mp3",
@@ -1623,7 +1617,6 @@ if (DEV.audit) {
     if (!DEV.skipIntro) {
         timeline.push(fox_intro);
         timeline.push(pie_intro);
-        timeline.push(intro);
         timeline.push(attention_intro);
         timeline.push(attention_retry_loop);
         timeline.push(button_training);
