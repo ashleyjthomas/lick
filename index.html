@@ -575,6 +575,15 @@ function trial_narration_audio_path(t) {
             });
         };
         attempt();
+
+        // She stays on screen after her line, and Chrome renders an ended
+        // alpha video as a washed-out ghost. Stepping back one frame leaves
+        // it merely paused, which composites correctly.
+        v.addEventListener('ended', () => {
+            if (isFinite(v.duration)) {
+                try { v.currentTime = Math.max(0, v.duration - 0.06); } catch (e) {}
+            }
+        }, { once: true });
         return v;
     };
     window.lick4_fox_hide = function() {
